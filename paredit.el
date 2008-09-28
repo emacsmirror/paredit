@@ -1025,16 +1025,16 @@ At the top level, where indentation is calculated to be at column 0,
   (if (not (fboundp 'comment-or-uncomment-region))
       (defalias 'comment-or-uncomment-region
         (lambda (beginning end &optional argument)
-         (interactive "*r\nP")
-         (funcall (if (save-excursion (goto-char beginning)
-                                      ;; This is not defined until `newcomment'
-                                      ;; is loaded.  Using `funcall' with a
-                                      ;; symbol shuts up the compiler.
-                                      (funcall 'comment-forward (point-max))
-                                      (<= end (point)))
-                      'uncomment-region
-                      'comment-region)
-                  beginning end argument))))
+          (interactive "*r\nP")
+          (funcall (if (save-excursion (goto-char beginning)
+                                       ;; This is undefined until `newcomment'
+                                       ;; is loaded.  Using `funcall' with a
+                                       ;; symbol shuts up the compiler.
+                                       (funcall 'comment-forward (point-max))
+                                       (<= end (point)))
+                       'uncomment-region
+                     'comment-region)
+                   beginning end argument))))
   (defalias 'paredit-initialize-comment-dwim 'comment-normalize-vars)
   (comment-normalize-vars))
 
