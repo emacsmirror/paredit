@@ -1027,7 +1027,10 @@ At the top level, where indentation is calculated to be at column 0,
         (lambda (beginning end &optional argument)
          (interactive "*r\nP")
          (funcall (if (save-excursion (goto-char beginning)
-                                      (comment-forward (point-max))
+                                      ;; This is not defined until `newcomment'
+                                      ;; is loaded.  Using `funcall' with a
+                                      ;; symbol shuts up the compiler.
+                                      (funcall 'comment-forward (point-max))
                                       (<= end (point)))
                       'uncomment-region
                       'comment-region)
