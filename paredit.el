@@ -1,7 +1,7 @@
 ;;; -*- mode: emacs-lisp -*-
 
 ;;;;;; paredit: Parenthesis editing minor mode
-;;;;;; Version 13
+;;;;;; Version 14
 
 ;;; This code is written by Taylor Campbell (except where explicitly
 ;;; noted) and placed in the Public Domain.  All warranties are
@@ -20,37 +20,33 @@
 ;;; turn it off with M-x disable-paredit-mode.
 ;;;
 ;;; This is written for GNU Emacs.  It is known not to work in XEmacs.
-;;; The author wrote it with GNU Emacs 22.0.50, but it should work in
-;;; earlier versions as well.  An alternative set of keybindings is
-;;; available in PAREDIT-TERMINAL-MODE that works in Emacs under Unix
-;;; terminals with the -nw option (implied or otherwise).
+;;; The author wrote it with GNU Emacs 22.0.50; it may work in
+;;; slightly earlier versions, but not older than 21 or so.  An
+;;; alternative minor mode, PAREDIT-TERMINAL-MODE, is provided that
+;;; works in Emacs under Unix terminals (i.e. `emacs -nw').
 ;;;
-;;; This mode changes the keybindings for (, ), and ", most notably;
-;;; if you really, really want a literal one of those, use C-q.
+;;; This mode changes the keybindings for a number of simple keys,
+;;; notably (, ), ", \, and ;.  The round bracket keys are defined to
+;;; insert parenthesis pairs and move past the close, respectively;
+;;; the double-quote key is multiplexed to do both, and also insert an
+;;; escape if within a string; backslashes prompt the user for the
+;;; next character to input, because a lone backslash can break
+;;; structure inadvertently; and semicolons insert comments in various
+;;; ways, similar to COMMENT-DWIM, but with different DWIM meanings.
+;;; (M-; as COMMENT-DWIM is still useful, and I still use it too, but
+;;; for different purposes.)  These all have their ordinary behaviour
+;;; when inside comments, and, outside comments, if truly necessary,
+;;; you can insert them literally with C-q.
 ;;;
-;;; This is only lightly tested; some of it may not work as well as one
-;;; might expect.  Comments, in particular, are not handled with as
-;;; much grace as I'd like, but I'm not sure quite yet how to handle
-;;; them as gracefully as I'd like.  (Block comments are not handled at
-;;; all, only line comments with a ; (semicolon) prefix.)
-;;;
-;;; There is one small but deeply fundamental problem in this model of
-;;; pretending to be a structure editor on top of what is really a text
-;;; editor, though: escapes, in character or string literals, which can
-;;; throw off the parsing of balanced delimiters.  The only way I've
-;;; come up to deal with this with any semblance of grace is to insert
-;;; only completed escape characters, by rebinding backslash to query
-;;; for the character to escape, and for the rest of the code to assume
-;;; only completed escapes.  This is a kludge, but an unfortunately
-;;; necessary one.
-;;;
-;;; Even with this kludge, it's still not perfect.  The code must
-;;; assume that all backslashes are involved in completed escapes, but
-;;; it's still possible to introduce an incomplete escape -- e.g., just
-;;; put the point after a backslash and insert any character.  Or,
-;;; rather, don't do that.  The rebound (, ), & " keys refuse to insert
-;;; themselves thus, but that's a crock, too.  If you want to rewrite a
-;;; character literal, first delete it and then type backslash again.
+;;; It also changes several standard editing keybindings including
+;;; RET, C-j, C-d, DEL, & C-k.  RET & C-j are transposed from their
+;;; usual paired meaning, where RET inserts a newline and C-j fancily
+;;; adds a new line with indentation &c., but I find the transposition
+;;; more convenient.  (You are free to change this, of course.)  C-d,
+;;; DEL, & C-k are instrumented to respect the S-expression structure.
+;;; You can, however, pass a prefix argument to them to get their
+;;; usual behaviour if necessary; e.g., C-u C-k will kill the whole
+;;; line, regardless of what S-expression structure there is on it.
 ;;;
 ;;; Automatic reindentation is performed as locally as possible, to
 ;;; ensure that Emacs does not interfere with custom indentation used
@@ -71,7 +67,7 @@
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 13)
+(defconst paredit-version 14)
 
 
 
@@ -90,6 +86,7 @@
     (define-key keymap (kbd "M-\"") 'paredit-close-string-and-newline)
     (define-key keymap "\""         'paredit-doublequote)
     (define-key keymap "\\"         'paredit-backslash)
+    (define-key keymap ";"          'paredit-semicolon)
 
     ;; This defies ordinary conventions, but I believe it is justified
     ;; and more convenient this way, to have RET be fancy and C-j
@@ -250,18 +247,49 @@ unintentionally."
          (paredit-blink-paren-match nil))))
 
 (defun paredit-close-list-and-newline ()
-  "Moves past one closing delimiter, adds a newline, and reindents."
+  "Moves past one closing delimiter, adds a newline, and reindents.
+If there was a margin comment after the closing delimiter, preserves
+the margin comment on the same line."
   (interactive)
   (cond ((or (paredit-in-string-p)
              (paredit-in-comment-p))
          (insert ")"))
         (t (if (paredit-in-char-p) (forward-char))
            (paredit-move-past-close-and-reindent)
-           (newline)
+           (let ((comment.point (paredit-find-comment-on-line)))
+             (newline)
+             (if comment.point
+                 (save-excursion
+                   (forward-line -1)
+                   (end-of-line)
+                   (indent-to (cdr comment.point))
+                   (insert (car comment.point)))))
            (lisp-indent-line)
            (condition-case () (indent-sexp)
              (scan-error nil))
            (paredit-blink-paren-match t))))
+
+(defun paredit-find-comment-on-line ()
+  "Finds a margin comment on the current line.
+If a comment exists, deletes the comment (including all leading
+whitespace) and returns a cons whose car is the comment as a string
+and whose cdr is the point of the comment's initial semicolon,
+relative to the start of the line."
+  (save-excursion
+    (catch 'return
+      (while t
+        (if (search-forward ";" (point-at-eol) t)
+            (if (not (or (paredit-in-string-p)
+                         (paredit-in-char-p)))
+                (let* ((start (progn (backward-char)  ;before semicolon
+                                     (point)))
+                       (comment (buffer-substring start
+                                                  (point-at-eol))))
+                  (paredit-skip-whitespace nil (point-at-bol))
+                  (delete-region (point) (point-at-eol))
+                  (throw 'return
+                         (cons comment (- start (point-at-bol))))))
+            (throw 'return nil))))))
 
 (defun paredit-move-past-close-and-reindent ()
   "Moves one character past the next closing parenthesis.
@@ -391,6 +419,73 @@ unintentionally."
     (insert char)                       ; (Is there a better way to
     nil))                               ; express the rubout char?
                                         ; ?\^? works, but ugh...)
+(defun paredit-semicolon (&optional arg)
+  "Insert a comment beginning, moving other items on the line.
+If in a string, comment, or character literal, or with a prefix
+argument, inserts just a literal semicolon."
+  (interactive "P")
+  (cond ((or (paredit-in-string-p)
+             (paredit-in-comment-p)
+             (paredit-in-char-p)
+             arg)
+         (insert ";"))
+        ;; At the beginning of a line, so try a top-level comment.
+        ((eq (point) (point-at-bol))
+         (paredit-top-level-comment))
+        ;; No more code on this line after the point.
+        ((save-excursion (paredit-skip-whitespace t (point-at-eol))
+                         (eq (point) (point-at-eol)))
+         (paredit-maybe-margin-comment))
+        (t (paredit-code-comment))))
+
+(defun paredit-top-level-comment ()
+  (let ((indent (calculate-lisp-indent)))
+    (if (not (eq (- (point) (point-at-bol))
+                 (if (consp indent)
+                     (car indent)
+                     indent)))
+        ;; Just incorrectly indented, so we'll use a code
+        ;; comment anyway after indenting first, and then break
+        ;; the line. 
+        (progn ;; If there's code ahead of here, adjust first.
+               (if (not (eq (point) (point-at-eol)))
+                   (save-excursion (newline-and-indent)))
+               (lisp-indent-line)
+               (insert ";; "))
+      ;; It is indeed a top-level comment, so insert three semicolons,
+      ;; after indenting code past the point on a new line if there is
+      ;; any.
+      (save-excursion
+        (if (progn (paredit-skip-whitespace t (point-at-eol))
+                   (not (eq (point) (point-at-eol))))
+            (newline)))
+      (insert ";;; "))))
+
+(defun paredit-maybe-margin-comment ()
+  (if (save-excursion (paredit-skip-whitespace nil (point-at-bol))
+                      (eq (point) (point-at-bol)))
+      ;; No code at all on this line, so it's not a margin comment;
+      (progn (lisp-indent-line)         ; indent it,
+             (insert (if (eq (point) (point-at-bol))
+                         ";;; "         ; and insert the appropriate
+                         ";; ")))       ; comment prefix.
+    ;; There is code on this line, just not after the point, so it will
+    ;; be margin comment.
+    (indent-to comment-column)
+    (if (not (memq (char-syntax (char-before))
+                   '(?\  ?-)))
+        (insert " "))
+    (insert "; ")))
+
+(defun paredit-code-comment ()
+  ;; If we're ahead of some code on the line, first move to another.
+  (if (not (save-excursion (paredit-skip-whitespace nil (point-at-bol))
+                           (eq (point) (point-at-bol))))
+      (newline))
+  (save-excursion (newline-and-indent))
+  (lisp-indent-line)
+  (insert ";; "))
+
 (defun paredit-newline ()
   "Inserts a newline and indents it.
 This is like `newline-and-indent', but it not only indents the line
