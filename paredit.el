@@ -1,7 +1,7 @@
 ;;; -*- mode: emacs-lisp -*-
 
 ;;;;;; paredit: Parenthesis editing minor mode
-;;;;;; Version 14
+;;;;;; Version 15
 
 ;;; This code is written by Taylor Campbell (except where explicitly
 ;;; noted) and placed in the Public Domain.  All warranties are
@@ -31,12 +31,11 @@
 ;;; the double-quote key is multiplexed to do both, and also insert an
 ;;; escape if within a string; backslashes prompt the user for the
 ;;; next character to input, because a lone backslash can break
-;;; structure inadvertently; and semicolons insert comments in various
-;;; ways, similar to COMMENT-DWIM, but with different DWIM meanings.
-;;; (M-; as COMMENT-DWIM is still useful, and I still use it too, but
-;;; for different purposes.)  These all have their ordinary behaviour
-;;; when inside comments, and, outside comments, if truly necessary,
-;;; you can insert them literally with C-q.
+;;; structure inadvertently; and semicolons ensure that they do not
+;;; accidentally comment valid structure.  (Use M-; to comment an
+;;; expression.)  These all have their ordinary behaviour when inside
+;;; comments, and, outside comments, if truly necessary, you can insert
+;;; them literally with C-q.
 ;;;
 ;;; It also changes several standard editing keybindings including
 ;;; RET, C-j, C-d, DEL, & C-k.  RET & C-j are transposed from their
@@ -61,13 +60,13 @@
 ;;; bad to have huge, long, hideously nested code anyway.
 ;;;
 ;;; Questions, bug reports, comments, feature suggestions, &c., can be
-;;; addressed to the author via mail at <campbell@bloodandcoffee.net>
+;;; addressed to the author via mail on the host mumble.net to campbell
 ;;; or via IRC on irc.freenode.net in #emacs, #scheme, or #lisp, under
 ;;; the nick Riastradh.
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 14)
+(defconst paredit-version 15)
 
 
 
@@ -87,6 +86,7 @@
     (define-key keymap "\""         'paredit-doublequote)
     (define-key keymap "\\"         'paredit-backslash)
     (define-key keymap ";"          'paredit-semicolon)
+    (define-key keymap "M-;"        'paredit-comment-dwim)
 
     ;; This defies ordinary conventions, but I believe it is justified
     ;; and more convenient this way, to have RET be fancy and C-j
@@ -422,69 +422,101 @@ unintentionally."
 (defun paredit-semicolon (&optional arg)
   "Insert a comment beginning, moving other items on the line.
 If in a string, comment, or character literal, or with a prefix
-argument, inserts just a literal semicolon."
+argument, inserts just a literal semicolon and does not move anything
+to the next line."
   (interactive "P")
-  (cond ((or (paredit-in-string-p)
-             (paredit-in-comment-p)
-             (paredit-in-char-p)
-             arg)
-         (insert ";"))
-        ;; At the beginning of a line, so try a top-level comment.
-        ((eq (point) (point-at-bol))
-         (paredit-top-level-comment))
-        ;; No more code on this line after the point.
-        ((save-excursion (paredit-skip-whitespace t (point-at-eol))
-                         (eq (point) (point-at-eol)))
-         (paredit-maybe-margin-comment))
-        (t (paredit-code-comment))))
+  (if (not (or (paredit-in-string-p)
+               (paredit-in-comment-p)
+               (paredit-in-char-p)
+               arg
+               ;; No more code on the line after the point.
+               (save-excursion
+                 (paredit-skip-whitespace t (point-at-eol))
+                 (eq (point) (point-at-eol)))))
+      ;; Don't use NEWLINE-AND-INDENT, because that will delete all of
+      ;; the horizontal whitespace first, but we just want to move the
+      ;; code following the point onto the next line while preserving
+      ;; the point on this line.
+      (save-excursion (newline) (lisp-indent-line)))
+  (insert ";"))
 
-(defun paredit-top-level-comment ()
-  (let ((indent (calculate-lisp-indent)))
-    (if (not (eq (- (point) (point-at-bol))
-                 (if (consp indent)
-                     (car indent)
-                     indent)))
-        ;; Just incorrectly indented, so we'll use a code
-        ;; comment anyway after indenting first, and then break
-        ;; the line. 
-        (progn ;; If there's code ahead of here, adjust first.
-               (if (not (eq (point) (point-at-eol)))
-                   (save-excursion (newline-and-indent)))
-               (lisp-indent-line)
-               (insert ";; "))
-      ;; It is indeed a top-level comment, so insert three semicolons,
-      ;; after indenting code past the point on a new line if there is
-      ;; any.
-      (save-excursion
-        (if (progn (paredit-skip-whitespace t (point-at-eol))
-                   (not (eq (point) (point-at-eol))))
-            (newline)))
-      (insert ";;; "))))
+(defun paredit-comment-dwim (&optional arg)
+  "Calls the Lisp comment command you want (Do What I Mean).
+This is like `comment-dwim', but it is specialized for Lisp editing.
+If transient mark mode is enabled and the mark is active, comments or
+uncomments the selected region, depending on whether it was entirely
+commented not not already.
+If there is already a comment on the current line, with no prefix
+argument, indents to that comment; with a prefix argument, kills that
+comment.
+Otherwise, inserts a comment appropriate for the context and ensures
+that any code following the comment is moved to the next line.
+At the top level, where indentation is calculated to be at column 0,
+this inserts a triple-semicolon comment; within code, where the
+indentation is calculated to be non-zero, and there is either no code
+on the line or code after the point on the line, inserts a double-
+semicolon comment; and if the point is after all code on the line,
+inserts a single-semicolon margin comment at `comment-column'."
+  (interactive "*P")
+  (comment-normalize-vars)
+  (cond ((and mark-active transient-mark-mode)
+         (comment-or-uncomment-region (region-beginning)
+                                      (region-end)
+                                      arg))
+        ((paredit-comment-on-line-p)
+         (if arg
+             (comment-kill (if (integerp arg) arg nil))
+             (comment-indent)))
+        (t (paredit-insert-comment))))
 
-(defun paredit-maybe-margin-comment ()
-  (if (save-excursion (paredit-skip-whitespace nil (point-at-bol))
-                      (eq (point) (point-at-bol)))
-      ;; No code at all on this line, so it's not a margin comment;
-      (progn (lisp-indent-line)         ; indent it,
-             (insert (if (eq (point) (point-at-bol))
-                         ";;; "         ; and insert the appropriate
-                         ";; ")))       ; comment prefix.
-    ;; There is code on this line, just not after the point, so it will
-    ;; be margin comment.
-    (indent-to comment-column)
-    (if (not (memq (char-syntax (char-before))
-                   '(?\  ?-)))
-        (insert " "))
-    (insert "; ")))
+(defun paredit-comment-on-line-p ()
+  (save-excursion
+    (goto-char (point-at-bol))
+    (let ((comment-p nil))
+      ;; Search forward for a comment beginning.  If there is one, set
+      ;; COMMENT-P to true; if not, it will be nil.
+      (while (progn (setq comment-p
+                          (search-forward ";" (point-at-eol)
+                                          ;; t -> no error
+                                          t))
+                    (and comment-p
+                         (or (paredit-in-string-p)
+                             (paredit-in-char-p (1- (point))))))
+        (forward-char))
+      comment-p)))
 
-(defun paredit-code-comment ()
-  ;; If we're ahead of some code on the line, first move to another.
-  (if (not (save-excursion (paredit-skip-whitespace nil (point-at-bol))
-                           (eq (point) (point-at-bol))))
-      (newline))
-  (save-excursion (newline-and-indent))
-  (lisp-indent-line)
-  (insert ";; "))
+(defun paredit-insert-comment ()
+  (let ((code-after-p
+         (save-excursion (paredit-skip-whitespace t (point-at-eol))
+                         (not (eq (point) (point-at-eol)))))
+        (code-before-p
+         (save-excursion (paredit-skip-whitespace nil (point-at-bol))
+                         (not (eq (point) (point-at-bol))))))
+    ;; We have to use EQ 0 here and not ZEROP because ZEROP signals an
+    ;; error if its argument is non-numeric, but CALCULATE-LISP-INDENT
+    ;; may return nil.
+    (if (eq (let ((indent (calculate-lisp-indent)))
+              (if (consp indent)
+                  (car indent)
+                  indent))
+            0)
+        ;; Top-level comment
+        (progn (if code-after-p (save-excursion (newline)))
+               (insert ";;; "))
+      (if code-after-p
+          ;; Code comment
+          (progn (if code-before-p (newline-and-indent))
+                 (lisp-indent-line)
+                 (insert ";; ")
+                 ;; Move the following code.  (NEWLINE-AND-INDENT will
+                 ;; delete whitespace after the comment, though, so use
+                 ;; NEWLINE & LISP-INDENT-LINE manually here.)
+                 (save-excursion (newline)
+                                 (lisp-indent-line)))
+          ;; Margin comment
+          (progn (indent-to comment-column
+                            1)          ; 1 -> force one space after
+                 (insert "; "))))))
 
 (defun paredit-newline ()
   "Inserts a newline and indents it.
