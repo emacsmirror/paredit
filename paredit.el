@@ -1678,25 +1678,33 @@ With a prefix argument N, kill only the following N S-expressions."
 (defun paredit-raise-sexp (&optional n)
   "Raise the following S-expression in a tree, deleting its siblings.
 With a prefix argument N, raise the following N S-expressions.  If N
-  is negative, raise the preceding N S-expressions."
+  is negative, raise the preceding N S-expressions.
+If the point is on an S-expression, such as a string or a symbol, not
+  between them, that S-expression is considered to follow the point."
   (interactive "p")
-  (paredit-lose-if-not-in-sexp 'paredit-raise-sexp)
-  ;; Select the S-expressions we want to raise in a buffer substring.
-  (let* ((bound (save-excursion (forward-sexp n) (point)))
-         (sexps (if (and n (< n 0))
-                    (buffer-substring bound
-                                      (paredit-point-at-sexp-end))
-                    (buffer-substring (paredit-point-at-sexp-start)
-                                      bound))))
-    ;; Move up to the list we're raising those S-expressions out of and
-    ;; delete it.
-    (backward-up-list)
-    (delete-region (point) (save-excursion (forward-sexp) (point)))
-    (save-excursion (insert sexps))     ; Insert & reindent the sexps.
-    (save-excursion (let ((n (abs (or n 1))))
-                      (while (> n 0)
-                        (paredit-forward-and-indent)
-                        (setq n (1- n)))))))
+  (save-excursion
+    (cond ((paredit-in-string-p)
+           (goto-char (car (paredit-string-start+end-points))))
+          ((paredit-in-char-p)
+           (backward-sexp))
+          ((paredit-in-comment-p)
+           (error "No S-expression to raise in comment.")))
+    ;; Select the S-expressions we want to raise in a buffer substring.
+    (let* ((bound (save-excursion (forward-sexp n) (point)))
+           (sexps (if (and n (< n 0))
+                      (buffer-substring bound
+                                        (paredit-point-at-sexp-end))
+                      (buffer-substring (paredit-point-at-sexp-start)
+                                        bound))))
+      ;; Move up to the list we're raising those S-expressions out of and
+      ;; delete it.
+      (backward-up-list)
+      (delete-region (point) (save-excursion (forward-sexp) (point)))
+      (save-excursion (insert sexps))   ; Insert & reindent the sexps.
+      (save-excursion (let ((n (abs (or n 1))))
+                        (while (> n 0)
+                          (paredit-forward-and-indent)
+                          (setq n (1- n))))))))
 
 (defun paredit-convolute-sexp (&optional n)
   "Convolute S-expressions.
