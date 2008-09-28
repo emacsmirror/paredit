@@ -1,7 +1,7 @@
 ;;; -*- mode: emacs-lisp -*-
 
 ;;;;;; paredit: Parenthesis editing minor mode
-;;;;;; Version 10
+;;;;;; Version 11
 
 ;;; This code is written by Taylor Campbell (except where explicitly
 ;;; noted) and placed in the Public Domain.  All warranties are
@@ -32,7 +32,7 @@
 ;;; might expect.  Comments, in particular, are not handled with as
 ;;; much grace as I'd like, but I'm not sure quite yet how to handle
 ;;; them as gracefully as I'd like.  (Block comments are not handled at
-;;; all, only line comments.)
+;;; all, only line comments with a ; (semicolon) prefix.)
 ;;;
 ;;; There is one small but deeply fundamental problem in this model of
 ;;; pretending to be a structure editor on top of what is really a text
@@ -63,10 +63,15 @@
 ;;; some of the commands taking too long to execute, tell me, but first
 ;;; make sure that what you're doing is reasonable: it is stylistically
 ;;; bad to have huge, long, hideously nested code anyway.
+;;;
+;;; Questions, bug reports, comments, feature suggestions, &c., can be
+;;; addressed to the author via mail at <campbell@bloodandcoffee.net>
+;;; or via IRC on irc.freenode.net in #emacs, #scheme, or #lisp, under
+;;; the nick Riastradh.
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 10)
+(defconst paredit-version 11)
 
 
 
@@ -125,8 +130,12 @@
     (define-key keymap (kbd "<C-left>")   'paredit-backward)
 
     (define-key keymap (kbd "M-(")  'paredit-wrap-sexp)
-    (define-key keymap (kbd "M-/")  'paredit-splice-sexp)
     (define-key keymap (kbd "M-\\") 'paredit-join-sexps)
+    (define-key keymap (kbd "M-s")  'paredit-splice-sexp)
+    (define-key keymap (kbd "<M-up>")
+      'paredit-splice-sexp-killing-backward)
+    (define-key keymap (kbd "<M-down>")
+      'paredit-splice-sexp-killing-forward)
 
     (define-key keymap (kbd "C-)") 'paredit-forward-slurp-sexp)
     (define-key keymap (kbd "C-}") 'paredit-forward-barf-sexp)
@@ -149,14 +158,19 @@ Emacs with a window system.")
     (define-key keymap (kbd "ESC M-O d")   'paredit-backward-slurp-sexp)
     (define-key keymap (kbd "ESC M-O c")   'paredit-backward-barf-sexp)
 
-    ;; Terminal sequences for C-up, C-down, C-M-left, & C-M-down,
-    ;; respectively.  (These are the same as in the regular mode map,
-    ;; except that Emacs doesn't recognize the correlation between what
-    ;; the terminal sends it and what KBD gives for "<C-up>" &c.)
-    (define-key keymap (kbd "ESC O a")     'backward-up-list)
-    (define-key keymap (kbd "ESC O b")     'down-list)
-    (define-key keymap (kbd "ESC M-O a")   'up-list)
-    (define-key keymap (kbd "ESC M-O b")   'backward-down-list)
+    ;; These are the same as in the regular mode map, except that Emacs
+    ;; doesn't recognize the correlation between what the terminal
+    ;; sends it and what KBD gives for "<C-up>" &c.)
+    (define-key keymap (kbd "ESC O a")   'backward-up-list)
+    (define-key keymap (kbd "ESC O b")   'down-list)
+    (define-key keymap (kbd "ESC M-O a") 'up-list)
+    (define-key keymap (kbd "ESC M-O b") 'backward-down-list)
+    (define-key keymap (kbd "ESC M-O c") 'paredit-forward)
+    (define-key keymap (kbd "ESC M-O d") 'paredit-backward)
+    (define-key keymap (kbd "ESC M-O A")
+      'paredit-splice-sexp-killing-backward)
+    (define-key keymap (kbd "ESC M-O B")
+      'paredit-splice-sexp-killing-forward)
 
     keymap)
   "Keymap for the paredit minor mode.
@@ -194,7 +208,8 @@ Uses `paredit-terminal-mode' if `window-system' is nil and
 
 (defun disable-paredit-mode ()
   "Turns off pseudo-structural editing of Lisp code.
-Disables both `paredit-mode' and `paredit-terminal-mode'."
+Disables whichever of `paredit-mode' and `paredit-terminal-mode' is
+active in the current buffer, if either."
   (interactive)
   (paredit-mode -1)
   (paredit-terminal-mode -1))
@@ -335,9 +350,7 @@ unintentionally."
                   (if (and (not (if endp (eobp) (bobp)))
                            (memq (char-syntax
                                   (if endp (char-after) (char-before)))
-                                 (list ?w ?_
-                                       (char-syntax ?\" )
-                                       delim-syn)))
+                                 (list ?w ?_ ?\" delim-syn)))
                       (insert " ")))))
            (funcall insert-space nil ?\) )
            (insert ?\" )
@@ -414,18 +427,22 @@ regard for delimiter balancing."
          (delete-char 1))
         ((eq (char-after) ?\\ )         ; ditto
          (delete-char 2))
-        ((or (eq (char-after) ?\( )
-             (eq (char-after) ?\" ))
+        ((let ((syn (char-syntax (char-after))))
+           (or (eq syn ?\( )
+               (eq syn ?\" )))
          (forward-char))
-        ((and (eq (char-before) ?\( )
+        ;; This is agnostic to whether the delimiters actually match,
+        ;; so it will delete, for instance, (] without complaining.  I
+        ;; am not sure whether this is the right thing.
+        ((and (eq (char-syntax (char-before)) ?\( )
               (not (paredit-in-char-p (1- (point))))
-              (eq (char-after)  ?\) ))
+              (eq (char-syntax (char-after))  ?\) ))
          (backward-delete-char 1)
          (delete-char 1))
         ;; Just delete a single character, if it's not a closing
         ;; parenthesis.  (The character literal case is already
         ;; handled by now.)
-        ((not (eq (char-after) ?\) ))
+        ((not (eq (char-syntax (char-after)) ?\) ))
          (delete-char 1))))
 
 (defun paredit-forward-delete-in-string ()
@@ -470,18 +487,19 @@ regard for delimiter balancing."
          (delete-char 1))
         ((paredit-in-char-p (1- (point)))
          (backward-delete-char 2))      ; ditto
-        ((and (or (eq (char-before) ?\) )
-                  (eq (char-before) ?\" ))
+        ((and (let ((syn (char-syntax (char-before))))
+                (or (eq syn ?\) )
+                    (eq syn ?\" )))
               (not (paredit-in-char-p (1- (point)))))
          (backward-char))
-        ((and (eq (char-before) ?\( )
+        ((and (eq (char-syntax (char-before)) ?\( )
               (not (paredit-in-char-p (1- (point))))
-              (eq (char-after)  ?\) ))
+              (eq (char-syntax (char-after))  ?\) ))
          (backward-delete-char 1)
          (delete-char 1))
         ;; Delete it, unless it's an opening parenthesis.  The case
         ;; of character literals is already handled by now.
-        ((not (eq (char-before) ?\( ))
+        ((not (eq (char-syntax (char-before)) ?\( ))
          (backward-delete-char-untabify 1))))
 
 (defun paredit-backward-delete-in-string ()
@@ -520,7 +538,7 @@ Otherwise, kills all S-expressions that start after the point."
          (paredit-kill-line-in-string))
         ((or (paredit-in-comment-p)
              (save-excursion
-               (skip-chars-forward " \t\n" (point-at-eol))
+               (paredit-skip-whitespace t (point-at-eol))
                (or (eq (char-after) ?\; )
                    (eolp))))
          ;** Be careful about trailing backslashes.
@@ -528,7 +546,7 @@ Otherwise, kills all S-expressions that start after the point."
         (t (paredit-kill-sexps-on-line))))
 
 (defun paredit-kill-line-in-string ()
-  (if (save-excursion (skip-chars-forward " \t\n" (point-at-eol))
+  (if (save-excursion (paredit-skip-whitespace t (point-at-eol))
                       (eolp))
       (kill-line)
     (save-excursion
@@ -549,28 +567,7 @@ Otherwise, kills all S-expressions that start after the point."
       (backward-char 2))                ; (# in Scheme/CL, ? in elisp)
   (let ((beg (point))
         (eol (point-at-eol))
-        (end-of-list-p nil))
-    ;; Move to the end of the last S-expression that started on this
-    ;; line, or to the closing delimiter if the last S-expression in
-    ;; this list is on the line.
-    (catch 'return
-      (while (save-excursion
-               (condition-case ()
-                   (forward-sexp)
-                 ;++ I wrote here:
-                 ;++      ;++ THIS IS BROKEN -- FIX
-                 ;++ But now I don't remember what was broken and needs
-                 ;++ fixing.  This whole thing, notably END-OF-LIST-P,
-                 ;++ was a crock to fix a corner case that I also don't
-                 ;++ remember now...
-                 (scan-error
-                  (up-list)
-                  (setq end-of-list-p (eq (point-at-eol) eol))
-                  (throw 'return nil)))
-               (and (not (eobp))
-                    (progn (backward-sexp)
-                           (eq (point-at-eol) eol))))
-        (forward-sexp)))
+        (end-of-list-p (paredit-forward-sexps-to-kill)))
     ;; If we got to the end of the list and it's on the same line,
     ;; move backward past the closing delimiter before killing.  (This
     ;; allows something like killing the whitespace in (    ).)
@@ -587,31 +584,63 @@ Otherwise, kills all S-expressions that start after the point."
                               (eq (point-at-eol) eol))
                          eol
                          (point)))
-      (kill-region beg
-                   (or (save-excursion  ; Delete indentation forward...
-                         (skip-chars-forward " \n\t")
-                         (and (not (eq (char-after) ?\; ))
-                              (point)))
-                       ;; ...or just use the point past the newline, if
-                       ;; we encounter a comment.
-                       (point-at-eol)))
-      (cond ((save-excursion (skip-chars-backward " \n\t"
-                                                  (point-at-bol))
-                             (bolp))
-             ;; Nothing but indentation before the point, so indent it.
-             (lisp-indent-line))
-            ;; If there is something before the point, make sure we
-            ;; don't join things that shouldn't be joined.
-            ((let ((syn-before (char-syntax (char-before)))
-                   (syn-after  (char-syntax (char-after))))
-               (or (and (eq syn-before ?\) )        ; Separate opposing
-                        (eq syn-after  ?\( ))       ;   parentheses,
-                   (and (eq syn-before ?\" )        ; string delimiter
-                        (eq syn-after  ?\" ))       ;   pairs,
-                   (and (memq syn-before '(?_ ?w))  ; or word or symbol
-                        (memq syn-after  '(?_ ?w))) ;   constituents.
-                   ))
-             (insert " "))))))
+      (paredit-kill-sexps-on-whole-line beg))))
+
+(defun paredit-forward-sexps-to-kill ()
+  (let ((beg (point))
+        (eol (point-at-eol))
+        (end-of-list-p nil))
+    ;; Move to the end of the last S-expression that started on this
+    ;; line, or to the closing delimiter if the last S-expression in
+    ;; this list is on the line.
+    (catch 'return
+      (while (and (not (eobp))
+                  (save-excursion
+                    (condition-case ()
+                        (forward-sexp)
+                        ;++ I wrote here:
+                        ;++      ;++ THIS IS BROKEN -- FIX
+                        ;++ But now I don't remember what was broken
+                        ;++ and needs fixing.  This whole construction,
+                        ;++ notably END-OF-LIST-P, was a crock to fix a
+                        ;++ corner case that I also no longer recall...
+                      (scan-error
+                       (up-list)
+                       (setq end-of-list-p (eq (point-at-eol) eol))
+                       (throw 'return nil)))
+                    ;; We have to deal with a weird special case here
+                    ;; of kill
+                    (and (condition-case ()
+                             (progn (backward-sexp) t)
+                           (scan-error nil))
+                         (eq (point-at-eol) eol))))
+        (forward-sexp)))
+    end-of-list-p))
+
+(defun paredit-kill-sexps-on-whole-line (beg)
+  (kill-region beg
+               (or (save-excursion     ; Delete trailing indentation...
+                     (paredit-skip-whitespace t)
+                     (and (not (eq (char-after) ?\; ))
+                          (point)))
+                   ;; ...or just use the point past the newline, if
+                   ;; we encounter a comment.
+                   (point-at-eol)))
+  (cond ((save-excursion (paredit-skip-whitespace nil (point-at-bol))
+                         (bolp))
+         ;; Nothing but indentation before the point, so indent it.
+         (lisp-indent-line))
+        ;; If there is something before the point, make sure we
+        ;; don't join things that shouldn't be joined.
+        ((let ((syn-before (char-syntax (char-before)))
+               (syn-after  (char-syntax (char-after))))
+           (or (and (eq syn-before ?\) )            ; Separate opposing
+                    (eq syn-after  ?\( ))           ;   parentheses,
+               (and (eq syn-before ?\" )            ; string delimiter
+                    (eq syn-after  ?\" ))           ;   pairs,
+               (and (memq syn-before '(?_ ?w))      ; or word or symbol
+                    (memq syn-after  '(?_ ?w)))))   ;   constituents.
+         (insert " "))))
 
 
 
@@ -619,28 +648,20 @@ Otherwise, kills all S-expressions that start after the point."
 ;;; Cursor and screen movement
 
 (defun paredit-forward ()
-  "Moves forward an S-expression.
-If there are any closing delimiters impeding such movement, first moves
-forward up lists until there are no more."
+  "Moves forward an S-expression, or up a list forward if there are no
+more S-expressions in this list before the closing delimiter."
   (interactive)
-  (catch 'return
-    (while t
-      (condition-case ()
-          (progn (forward-sexp)
-                 (throw 'return nil))
-        (scan-error (up-list))))))
+  (condition-case ()
+      (forward-sexp)
+    (scan-error (up-list))))
 
 (defun paredit-backward ()
-  "Moves backward an S-expression.
-If there are any opening delimiters impeding such movement, first moves
-backward up lists until there are no more."
+  "Moves backward an S-expression, or up a list backward if there are
+no more S-expressions in this list before the opening delimiter."
   (interactive)
-  (catch 'return
-    (while t
-      (condition-case ()
-          (progn (backward-sexp)
-                 (throw 'return nil))
-        (scan-error (backward-up-list))))))
+  (condition-case ()
+      (backward-sexp)
+    (scan-error (backward-up-list))))
 
 ;;; Why is this not in lisp.el?
 
@@ -694,55 +715,77 @@ signal an error."
 ;;; by other people.)
 
 (defun paredit-splice-sexp (&optional arg)
-  "Splices the list the point is on by removing its delimiters.
-With a prefix argument as in `C-u', deletes all S-expressions backward
-in the current list before splicing all S-expressions forward into the
+  "Splices the list that the point is on by removing its delimiters.
+With a prefix argument as in `C-u', kills all S-expressions backward in
+the current list before splicing all S-expressions forward into the
 enclosing list.
-With two prefix arguments as in `C-u C-u', deletes all S-expressions
+With two prefix arguments as in `C-u C-u', kills all S-expressions
 forward in the current list before splicing all S-expressions backward
 into the enclosing list.
-With a numerical prefix argument N, deletes N S-expressions backward in
+With a numerical prefix argument N, kills N S-expressions backward in
 the current list before splicing the remaining S-expressions into the
-enclosing list."
+enclosing list.  If N is negative, kills forward."
   (interactive "P")
   (save-excursion
-    (if (and arg (not (eq arg 0)))
-        (cond ((numberp arg)
-               ;; Delete ARG S-expressions before/after the point by
-               ;; saving the point, moving across them, and deleting
-               ;; the region.
-               (let ((saved (point)))
-                 (condition-case ()
-                     (backward-sexp arg)
-                   (scan-error nil))
-                 (if (< arg 0)
-                     (delete-region saved (point))
-                     (delete-region (point) saved))))
-              ((consp arg)
-               (let ((v (car arg)))
-                 (if (= v 4)
-                     ;; Move backward until we hit the open paren; then
-                     ;; delete that selected region.
-                     (let ((end (point)))
-                       (condition-case ()
-                           (while (not (bobp)) (backward-sexp))
-                         (scan-error nil))
-                       (delete-region (point) end))
-                     ;; Move forward until we hit the close paren; then
-                     ;; delete that selected region.
-                     (let ((beg (point)))
-                       (condition-case ()
-                           (while (not (eobp)) (forward-sexp))
-                         (scan-error nil))
-                       (delete-region beg (point))))))
-              (t (error "Bizarre prefix argument: %s" arg))))
+    (paredit-kill-surrounding-sexps-for-splice arg)
     (backward-up-list)                  ; Go up to the beginning...
     (save-excursion
       (forward-sexp)                    ; Go forward an expression, to
       (backward-delete-char 1))         ;   delete the end delimiter.
     (delete-char 1)                     ; ...to delete the open char.
-    (backward-up-list)                  ; Reindent, now that the
-    (indent-sexp)))                     ;   structure has changed.
+    (condition-case ()
+        (progn (backward-up-list)       ; Reindent, now that the
+               (indent-sexp))           ;   structure has changed.
+      (scan-error nil))))
+
+(defun paredit-kill-surrounding-sexps-for-splice (arg)
+  (if (and arg (not (eq arg 0)))
+      (cond ((numberp arg)
+             ;; Kill ARG S-expressions before/after the point by saving
+             ;; the point, moving across them, and killing the region.
+             (let ((saved (point)))
+               (condition-case ()
+                   (backward-sexp arg)
+                 (scan-error nil))
+               (if (< arg 0)
+                   (kill-region saved (point))
+                   (kill-region (point) saved))))
+            ((consp arg)
+             (let ((v (car arg)))
+               (if (= v 4)
+                   ;; Move backward until we hit the open paren; then
+                   ;; kill that selected region.
+                   (let ((end (point)))
+                     (condition-case ()
+                         (while (not (bobp)) (backward-sexp))
+                       (scan-error nil))
+                     (kill-region (point) end))
+                 ;; Move forward until we hit the close paren; then
+                 ;; kill that selected region.
+                 (let ((beg (point)))
+                   (condition-case ()
+                       (while (not (eobp)) (forward-sexp))
+                     (scan-error nil))
+                   (kill-region beg (point))))))
+            (t (error "Bizarre prefix argument: %s" arg)))))
+
+(defun paredit-splice-sexp-killing-backward (&optional n)
+  "Splices the list the point is on by removing its delimiters, and
+also kills all S-expressions before the point in the current list.
+With a prefix argument N, kills only the preceding N S-expressions."
+  (interactive "P")
+  (paredit-splice-sexp (if n
+                           (prefix-numeric-value n)
+                         '(4))))
+
+(defun paredit-splice-sexp-killing-forward (&optional n)
+  "Splices the list the point is on by removing its delimiters, and
+also kills all S-expressions after the point in the current list.  With
+a prefix argument N, kills only the following N S-expressions."
+  (interactive "P")
+  (paredit-splice-sexp (if n
+                           (- (prefix-numeric-value n))
+                         '(16))))
 
 (defun paredit-join-sexps ()
   "Joins two adjacent S-expressions into one S-expression."
@@ -793,7 +836,7 @@ respect to their new enclosing form."
       (condition-case ()                ; Go back to where we want to
           (backward-sexp)               ;   insert the delimiter.
         (scan-error nil))               ; Ignore scan errors, and
-      (skip-chars-backward " \t\n")     ;   skip leading whitespace.
+      (paredit-skip-whitespace nil)     ;   skip leading whitespace.
       (cond ((bobp)
              (message
               "Barfing all subexpressions with no open-paren?"))
@@ -847,7 +890,7 @@ it was barfed."
             (delete-char 1)
             (condition-case () (paredit-forward-and-indent)
               (scan-error nil))
-            (while (progn (skip-chars-forward " \t\n")
+            (while (progn (paredit-skip-whitespace t)
                           (eq (char-after) ?\; ))
               (goto-char (1+ (point-at-eol))))
             (if (eobp)
@@ -887,7 +930,7 @@ that the point is already within a string."
         (cons start (1- (point)))))))
 
 (defun paredit-in-string-escape-p ()
-  "True if the point is on a character escaped by a backslash.
+  "True if the point is on a character escape of a string.
 This is true only if the character is preceded by an odd number of
 backslashes.
 This assumes that `paredit-in-string-p' has already returned true."
@@ -916,17 +959,16 @@ This assumes that `paredit-in-string-p' has already returned false."
 
 (defun paredit-in-char-p (&optional arg)
   "True if the point is immediately after a character literal.
-A preceding backslash, not preceded by another backslash, is considered
-a character literal prefix.  (This works for elisp, Common Lisp, and
-Scheme.)
+A preceding escape character, not preceded by another escape character,
+is considered a character literal prefix.  (This works for elisp,
+Common Lisp, and Scheme.)
 Assumes that `paredit-in-string-p' is false, so that it need not handle
 long sequences of preceding backslashes in string escapes.  (This
 assumes some other leading character token -- ? in elisp, # in Scheme
 and Common Lisp.)"
   (let ((arg (or arg (point))))
     (and (eq (char-before arg) ?\\ )
-         (not (eq (char-before (1- arg))
-                  ?\\ )))))
+         (not (eq (char-before (1- arg)) ?\\ )))))
 
 (defun paredit-forward-and-indent ()
   "Move forward an S-expression, indenting it fully with both
@@ -936,6 +978,14 @@ and Common Lisp.)"
     (backward-sexp)                     ;   S-expression.
     (lisp-indent-line)                  ; Indent its opening line, and
     (indent-sexp)))                     ;   the rest of it.
+
+(defun paredit-skip-whitespace (trailing-p &optional limit)
+  "Skip past any whitespace, or until the point LIMIT is reached.
+If TRAILING-P is nil, skips leading whitespace; otherwise, skips
+trailing whitespace."
+  (funcall (if trailing-p #'skip-syntax-forward #'skip-syntax-backward)
+           " -"                    ; space & hyphen = whitespace syntax
+           limit))
 
 
 
