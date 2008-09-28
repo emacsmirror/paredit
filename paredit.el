@@ -1,7 +1,7 @@
 ;;; -*- mode: emacs-lisp -*-
 
 ;;;;;; paredit: Parenthesis editing minor mode
-;;;;;; Version 6
+;;;;;; Version 7
 
 ;;; Taylor Campbell wrote this code; he places it in the public domain.
 
@@ -20,15 +20,25 @@
 ;;; This is only lightly tested; some of it may not work as well as one
 ;;; might expect.  Comments, in particular, are not handled with as
 ;;; much grace as I'd like, but I'm not sure quite yet how to handle
-;;; them as gracefully as I'd like.  There is one small but deeply
-;;; fundamental problem in this model of pretending to be a structure
-;;; editor on top of what is really a text editor, though: escapes, in
-;;; character or string literals, which can throw off the parsing of
-;;; balanced delimiters.  The only way I've come up to deal with this
-;;; with any semblance of grace is to insert only completed escape
-;;; characters, by rebinding backslash to query for the character to
-;;; escape, and for the rest of the code to assume only completed
-;;; escapes.  This is a crock, but an unfortunately necessary one.
+;;; them as gracefully as I'd like.
+;;;
+;;; There is one small but deeply fundamental problem in this model of
+;;; pretending to be a structure editor on top of what is really a text
+;;; editor, though: escapes, in character or string literals, which can
+;;; throw off the parsing of balanced delimiters.  The only way I've
+;;; come up to deal with this with any semblance of grace is to insert
+;;; only completed escape characters, by rebinding backslash to query
+;;; for the character to escape, and for the rest of the code to assume
+;;; only completed escapes.  This is a kludge, but an unfortunately
+;;; necessary one.
+;;;
+;;; Even with this kludge, it's still not perfect.  The code must
+;;; assume that all backslashes are involved in completed escapes, but
+;;; it's still possible to introduce an incomplete escape -- e.g., just
+;;; put the point after a backslash and insert any character.  Or,
+;;; rather, don't do that.  The rebound (, ), & " keys refuse to insert
+;;; themselves thus, but that's a crock, too.  If you want to rewrite a
+;;; character literal, first delete it and then type backslash again.
 ;;;
 ;;; Automatic reindentation is performed as locally as possible, to
 ;;; ensure that Emacs does not interfere with custom indentation used
@@ -44,7 +54,7 @@
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 6)
+(defconst paredit-version 7)
 
 (defvar paredit-mode-map
   (let ((keymap (make-sparse-keymap)))
@@ -79,7 +89,7 @@
     (define-key keymap (kbd "C-{") 'backward-barf-sexp)
     
     keymap)
-  "Keymap for paredit minor mode.")
+  "Keymap for the paredit minor mode.")
 
 (define-minor-mode paredit-mode
   "Minor mode for pseudo-structurally editing Lisp code."
@@ -92,82 +102,131 @@
 
 (defun paredit-open-list ()
   "Inserts a balanced parenthesis pair.
-If in string, comment, or character literal, inserts a single opening
-parenthesis."
+If in string or comment, inserts a single opening parenthesis.
+If in a character literal, does nothing.  This prevents accidentally
+changing what was in the character literal to a meaningful delimiter
+unintentionally."
   (interactive)
-  (if (or (paredit-in-string-p)
-          (paredit-in-comment-p)
-          (paredit-in-char-p))
-      (insert "(")
-    (insert-parentheses 0)))
+  (cond ((or (paredit-in-string-p)
+             (paredit-in-comment-p))
+         (insert "("))
+        ((not (paredit-in-char-p))
+         (insert-parentheses 0))))
 
 (defun paredit-close-list ()
   "Moves past one closing parenthesis and reindents.
-If in a string, comment, or character literal, inserts a single closing
-parenthesis."
+If in a string or comment, inserts a single closing parenthesis.
+If in a character literal, does nothing.  This prevents accidentally
+changing what was in the character literal to a meaningful delimiter
+unintentionally."
   (interactive)
-  (if (or (paredit-in-string-p)
-          (paredit-in-comment-p)
-          (paredit-in-char-p))
-      (insert ")")
-    (move-past-close-and-reindent)
-    ;; Reindent not only the current line but, if there is a valid
-    ;; S-expression following the point, that too.
-    (condition-case nil (indent-sexp)
-      (scan-error nil)))
-  (if blink-matching-paren
-      (condition-case nil
-          (save-excursion
-            (backward-sexp)
-            (forward-sexp)
-            (blink-matching-open))
-        (error nil))))
+  (cond ((or (paredit-in-string-p)
+             (paredit-in-comment-p))
+         (insert ")"))
+        ((not (paredit-in-char-p))
+         (paredit-move-past-close-and-reindent)
+         (if blink-matching-paren
+             (condition-case nil
+                 (save-excursion
+                   (backward-sexp)
+                   (forward-sexp)
+                   (blink-matching-open))
+               (scan-error nil))))))
+
+(defun paredit-move-past-close-and-reindent ()
+  "Moves one character past the next closing parenthesis.
+Deletes extraneous whitespace before the closing parenthesis.  Comments
+are not deleted, however; if there is a comment between the point and
+the next closing parenthesis, the closing parenthesis is moved to the
+line after the comment and indented appropriately."
+  (interactive)
+  (let ((orig (point)))
+    (up-list)
+    (if (catch 'exit                    ; This CATCH returns T if it
+          (while t                      ; should delete leading spaces
+            (save-excursion             ; and NIL if not.
+              (let ((before-paren (1- (point))))
+                (back-to-indentation)
+                (cond ((not (eq (point) before-paren))
+                       ;; Can't call PAREDIT-DELETE-LEADING-WHITESPACE
+                       ;; here -- we must return from SAVE-EXCURSION
+                       ;; first.
+                       (throw 'exit t))
+                      ((save-excursion (previous-line)
+                                       (end-of-line)
+                                       (paredit-in-comment-p))
+                       ;; Moving the closing parenthesis any further
+                       ;; would put it into a comment, so we just
+                       ;; indent the closing parenthesis where it is
+                       ;; and abort the loop, telling its continuation
+                       ;; that no leading whitespace should be deleted.
+                       (lisp-indent-line)
+                       (throw 'exit nil))
+                      (t (delete-indentation)))))))
+        (paredit-delete-leading-whitespace)))
+  (condition-case nil (indent-sexp)
+    (scan-error nil)))
+
+(defun paredit-delete-leading-whitespace ()
+  ;; This assumes that we're on the closing parenthesis already.
+  (save-excursion
+    (backward-char)
+    (while (let ((syn (char-syntax (char-before))))
+             (and (or (eq syn ?\ ) (eq syn ?-)) ; whitespace syntax
+                  ;; The above line is a perfect example of why the
+                  ;; following test is necessary.
+                  (not (paredit-in-char-p (1- (point))))))
+      (backward-delete-char 1))))
 
 (defun paredit-doublequote ()
   "Inserts a pair of double-quotes.
 Inside a comment, inserts a literal double-quote.
 At the end of a string, moves past the closing double-quote.
-In the middle of a string, inserts a backslash-escaped double-quote."
+In the middle of a string, inserts a backslash-escaped double-quote.
+If in a character literal, does nothing.  This prevents accidentally
+changing a what was in the character literal to a meaningful delimiter
+unintentionally."
   (interactive)
   (cond ((paredit-in-string-p)
          (if (eq (cdr (paredit-string-start+end-points))
                  (point))
-             (forward-char)
+             (forward-char)             ; We're on the closing quote.
            (insert ?\\ ?\" )))
         ((paredit-in-comment-p)
          (insert ?\" ))
-        ;; I'm not sure what to do about the character literal case.
         ((not (paredit-in-char-p))
          (let ((insert-space
-                (lambda (endp)
+                (lambda (endp delim-syn)
                   (if (and (not (if endp (eobp) (bobp)))
                            (memq (char-syntax
                                   (if endp (char-after) (char-before)))
                                  (list ?w ?_
                                        (char-syntax ?\" )
-                                       (char-syntax ?\( )
-                                       (if endp    ;++ sloppy
-                                           nil
-                                         (char-syntax ?\) )))))
+                                       delim-syn)))
                       (insert " ")))))
-           (funcall insert-space nil)
+           (funcall insert-space nil ?\) )
            (insert ?\" )
            (save-excursion
              (insert ?\" )
-             (funcall insert-space t))))))
+             (funcall insert-space t ?\( ))))))
 
 (defun paredit-backslash ()
   "Inserts a backslash followed by a character to escape."
   (interactive)
   ;; This funny conditional is necessary because PAREDIT-IN-COMMENT-P
   ;; assumes that PAREDIT-IN-STRING-P already returned false; otherwise
-  ;; it may break.
+  ;; it may give erroneous answers.
   (insert ?\\ )
   (if (or (paredit-in-string-p)
           (not (paredit-in-comment-p)))
       (let ((delp t))
         (unwind-protect (setq delp
                               (call-interactively #'paredit-escape))
+          ;; We need this in an UNWIND-PROTECT so that the backlash is
+          ;; left in there *only* if PAREDIT-ESCAPE return NIL normally
+          ;; -- in any other case, such as the user hitting C-g or an
+          ;; error occurring, we must delete the backslash to avoid
+          ;; leaving a dangling escape.
           (if delp (backward-delete-char 1))))))
 
 ;;; This auxiliary interactive function returns true if the backslash
@@ -176,9 +235,9 @@ In the middle of a string, inserts a backslash-escaped double-quote."
 (defun paredit-escape (char)
   ;; I'm too lazy to figure out how to do this without a separate
   ;; interactive function.
-  (interactive "cCharacter to escape: ")
-  (if (eq char 127)                     ; luser made a typo and deleted
-      t
+  (interactive "cEscaping character...")
+  (if (eq char 127)                     ; The luser made a typo and hit
+      t                                 ; DEL to delete the backslash.
     (insert char)
     nil))
 
@@ -186,13 +245,15 @@ In the middle of a string, inserts a backslash-escaped double-quote."
   "Inserts a newline and indents it.
 This is like `newline-and-indent', but it not only indents the line
 that the point is on but also the S-expression following the point, if
-there is one."
+there is one.
+Moves forward one character first if on an escaped character."
   (interactive)
   (if (paredit-in-char-p)
       (forward-char))
   (newline-and-indent)
   ;; Indent the following S-expression, but don't signal an error if
-  ;; there's only a closing parenthesis after the point.
+  ;; there's only a closing parenthesis after the point, not a full
+  ;; S-expression.
   (condition-case nil (indent-sexp)
     (scan-error nil)))
 
@@ -214,11 +275,11 @@ regard for delimiter balancing."
            ;++ into a comment and thereby invalidate the file's form,
            ;++ or move random text out of a comment.
            (delete-char 1))
-          ((eq (char-after) ?\\ )       ; Escape -- delete both chars.
-           (delete-char 2))
-          ((paredit-in-char-p)          ; ditto
+          ((paredit-in-char-p)          ; Escape -- delete both chars.
            (backward-delete-char 1)
            (delete-char 1))
+          ((eq (char-after) ?\\ )       ; ditto
+           (delete-char 2))
           ((or (eq (char-after) ?\( )
                (eq (char-after) ?\" ))
            (forward-char))
@@ -234,23 +295,27 @@ regard for delimiter balancing."
            (delete-char 1)))))
 
 (defun paredit-forward-delete-in-string ()
-  (cond ((paredit-in-string-escape-p)
-         (backward-delete-char 1)
-         (delete-char 1))
-        ((eq (char-after) ?\\ )
-         (delete-char 2))
-        (t
-         (let ((start+end (paredit-string-start+end-points)))
-           (cond ((not (eq (point) (cdr start+end)))
-                  ;; Delete the char if it's not the close-quote.
-                  (delete-char 1))
-                 ((eq (1- (point)) (car start+end))
-                  ;; If it is the close-quote, delete only if we're also
-                  ;; right past the open-quote (i.e. it's empty), and
-                  ;; then delete both quotes.  Otherwise we refuse to
-                  ;; delete it.
-                  (backward-delete-char 1)
-                  (delete-char 1)))))))
+  (let ((start+end (paredit-string-start+end-points)))
+    (cond ((not (eq (point) (cdr start+end)))
+           ;; If it's not the close-quote, it's safe to delete.  But
+           ;; first handle the case that we're in a string escape.
+           (cond ((paredit-in-string-escape-p)
+                  ;; We're right after the backslash, so backward
+                  ;; delete it before deleting the escaped character.
+                  (backward-delete-char 1))
+                 ((eq (char-after) ?\\ )
+                  ;; If we're not in a string escape, but we are on a
+                  ;; backslash, it must start the escape for the next
+                  ;; character, so delete the backslash before deleting
+                  ;; the next character.
+                  (delete-char 1)))
+           (delete-char 1))
+          ((eq (1- (point)) (cdr start+end))
+           ;; If it is the close-quote, delete only if we're also right
+           ;; past the open-quote (i.e. it's empty), and then delete
+           ;; both quotes.  Otherwise we refuse to delete it.
+           (backward-delete-char 1)
+           (delete-char 1)))))
 
 (defun paredit-backward-delete (&optional arg)
   "Deletes a character backward or moves backward over a delimiter.
@@ -262,7 +327,7 @@ With a prefix argument, simply deletes a character backward, without
 regard for delimiter balancing."
   (interactive "P")
   (if arg
-      (backward-delete-char 1)
+      (backward-delete-char 1)          ;++ should this untabify?
     (cond ((paredit-in-string-p)
            (paredit-backward-delete-in-string))
           ((paredit-in-comment-p)
@@ -288,30 +353,27 @@ regard for delimiter balancing."
            (backward-delete-char-untabify 1)))))
 
 (defun paredit-backward-delete-in-string ()
-  (cond ((paredit-in-string-escape-p)
-         (backward-delete-char 1)
-         (delete-char 1))
-        ((and (not (eq (char-before) ?\"))
-              ;; Delete a whole string escape -- but first make sure we
-              ;; don't run backwards out the front end of the string.
-              (save-excursion (backward-char)
-                              (paredit-in-string-escape-p)))
-         (backward-delete-char 2))
-        (t
-         (let ((start+end (paredit-string-start+end-points)))
-           (cond ((not (eq (1- (point)) (car start+end)))
-                  ;; Delete the char if it's not the open-quote.
-                  ;; Delete twice if it's an escaped character.
-                  (backward-delete-char 1)
-                  (if (paredit-in-string-escape-p)
-                      (backward-delete-char 1)))
-                 ((eq (point) (cdr start+end))
-                  ;; If it is the open-quote, delete only if we're also
-                  ;; right past the close-quote (i.e. it's empty), and
-                  ;; then delete both quotes.  Otherwise we refuse to
-                  ;; delete it.
-                  (backward-delete-char 1)
-                  (delete-char 1)))))))
+  (let ((start+end (paredit-string-start+end-points)))
+    (cond ((not (eq (1- (point)) (car start+end)))
+           ;; If it's not the open-quote, it's safe to delete.
+           (if (paredit-in-string-escape-p)
+               ;; If we're on a string escape, since we're about to
+               ;; delete the backslash, we must first delete the
+               ;; escaped char.
+               (delete-char 1))
+           (backward-delete-char 1)
+           (if (paredit-in-string-escape-p)
+               ;; If, after deleting a character, we find ourselves in
+               ;; a string escape, we must have deleted the escaped
+               ;; character, and the backslash is behind the point, so
+               ;; backward delete it.
+               (backward-delete-char 1)))
+          ((eq (point) (cdr start+end))
+           ;; If it is the open-quote, delete only if we're also right
+           ;; past the close-quote (i.e. it's empty), and then delete
+           ;; both quotes.  Otherwise we refuse to delete it.
+           (backward-delete-char 1)
+           (delete-char 1)))))
 
 (defun paredit-kill ()
   "Kills a line or S-expression.
@@ -329,8 +391,10 @@ closing string delimiter."
                    (eq (char-after) ?\; ))))
          (if (eq (char-before (point-at-eol))
                  ?\\ )
-             ;++ This is a crock: we don't want to catch an incomplete
-             ;++ escape sequence.
+             ;++ This is a crock: we don't want to kill an incomplete
+             ;++ escape sequence, so we include the newline.  This
+             ;++ won't work on the last line of the buffer, however, if
+             ;++ it is not followed by one empty line.
              (progn (kill-region (point) (1+ (point-at-eol)))
                     (insert ?\n ))
            (kill-line)))
@@ -409,12 +473,6 @@ Automatically indents the newly wrapped S-expression."
 ;;; ----------------
 ;;; Slurpage & barfage
 
-;;; This shouldn't be here.
-
-(defmacro ignore-errors (&rest body)
-  `(condition-case nil (progn ,@body)
-     (error nil)))
-
 (defun forward-slurp-sexp (&optional n)
   "Adds the S-expression following the current list into that list by
 moving the closing delimiter.
@@ -427,8 +485,9 @@ their new enclosing form."
     (up-list)                           ; Up to the end of the list to
     (let ((close (char-before)))        ;   save and delete the closing
       (backward-delete-char 1)          ;   delimiter.
-      (ignore-errors                    ; Go to the end of the last
-        (paredit-forward-and-indent n)) ;   S-expression,
+      (condition-case nil               ; Go to the end of the last
+          (paredit-forward-and-indent n);   S-expression,
+        (scan-error nil))               ;   (ignoring going too far)
       (insert close))))                 ; to insert that delimiter.
 
 (defun forward-barf-sexp (&optional n)
@@ -443,8 +502,10 @@ respect to their new enclosing form."
     (up-list)                           ; Up to the end of the list to
     (let ((close (char-before)))        ;   save and delete the closing
       (backward-delete-char 1)          ;   delimiter.
-      (ignore-errors (backward-sexp n)) ; Go back to where we want to
-      (skip-chars-backward " \t\n")     ;   insert the delimiter.
+      (condition-case nil               ; Go back to where we want to
+          (backward-sexp n)             ;   insert the delimiter.
+        (scan-error nil))               ; Ignore scan errors, and
+      (skip-chars-backward " \t\n")     ;   skip leading whitespace.
       (if (bobp)
           (message "Barfing all subexpressions with no open-paren?"))
       (insert close))
@@ -463,7 +524,8 @@ were slurped."
     (backward-up-list)
     (let ((open (char-after)))
       (delete-char 1)
-      (ignore-errors (backward-sexp n))
+      (condition-case nil (backward-sexp n)
+        (scan-error nil))
       (insert open))
     ;; Reindent the line at the beginning of wherever we inserted the
     ;; opening parenthesis, and then indent the whole S-expression.
@@ -483,7 +545,8 @@ from which they were barfed."
     (backward-up-list)
     (let ((open (char-after)))
       (delete-char 1)
-      (ignore-errors (paredit-forward-and-indent n))
+      (condition-case nil (paredit-forward-and-indent n)
+        (scan-error nil))
       (skip-chars-forward " \t\n")      ;++ should handle comments
       (if (eobp)
           (message "Barfing all subexpressions with no close-paren?"))
@@ -540,16 +603,13 @@ This assumes that `paredit-in-string-p' has already returned false."
   (save-excursion
     (let ((orig (point)) (res nil))
       (goto-char (point-at-bol))
-      ;; The third T argument to SEARCH-FORWARD says to return NIL,
+      ;; The second T argument to SEARCH-FORWARD says to return NIL,
       ;; not to signal an error, if no match is found.
-      (setq res (search-forward ";" orig t))
-      (while (and res
-                  (or (paredit-in-string-p)
-                      (prog2 (backward-char)
-                          (paredit-in-char-p)
-                        (forward-char))))
-        (forward-char)
-        (setq res (search-forward ";" orig t)))
+      (while (progn (setq res (search-forward ";" orig t))
+                    (and res
+                         (or (paredit-in-string-p)
+                             (paredit-in-char-p (1- (point))))))
+        (forward-char))
       (and res (<= res orig)))))
 
 (defun paredit-in-char-p (&optional arg)
