@@ -1,7 +1,11 @@
 ;;; -*- Mode: Emacs-Lisp; outline-regexp: "\n;;;;+" -*-
 
 ;;;;;; Paredit: Parenthesis-Editing Minor Mode
-;;;;;; Version 21
+;;;;;; Version 22 (beta)
+
+;;; NOTE:  THIS IS A BETA VERSION OF PAREDIT.  USE AT YOUR OWN RISK.
+;;; THIS FILE IS SUBJECT TO CHANGE, AND NOT SUITABLE FOR DISTRIBUTION
+;;; BY PACKAGE MANAGERS SUCH AS APT, PKGSRC, MACPORTS, &C.
 
 ;;; Copyright (c) 2008, Taylor R. Campbell
 ;;;
@@ -34,7 +38,7 @@
 ;;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ;;; This file is permanently stored at
-;;;   <http://mumble.net/~campbell/emacs/paredit-21.el>.
+;;;   <http://mumble.net/~campbell/emacs/paredit-22.el>.
 ;;;
 ;;; The currently released version of paredit is available at
 ;;;   <http://mumble.net/~campbell/emacs/paredit.el>.
@@ -174,8 +178,8 @@
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 21)
-(defconst paredit-beta-p nil)
+(defconst paredit-version 22)
+(defconst paredit-beta-p t)
 
 (eval-and-compile
 
