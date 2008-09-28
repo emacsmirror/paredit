@@ -1,7 +1,7 @@
 ;;; -*- mode: emacs-lisp -*-
 
 ;;;;;; paredit: Parenthesis editing minor mode
-;;;;;; Version 8
+;;;;;; Version 9
 
 ;;; Taylor Campbell wrote this code; he places it in the public domain.
 
@@ -60,24 +60,15 @@
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 8)
+(defconst paredit-version 9)
 
-(define-minor-mode paredit-mode
-  "Minor mode for pseudo-structurally editing Lisp code.
-Uses keybindings that will not work under a Unix terminal; see
-`paredit-terminal-mode' for an alternative set of keybindings that will
-work in `emacs -nw' running under a Unix terminal."
-  :lighter " Paredit"
-  (if (and paredit-mode paredit-terminal-mode)
-      (paredit-terminal-mode -1)))
+
 
-(define-minor-mode paredit-terminal-mode
-  "Minor mode for pseudo-structurally editing Lisp code.
-Uses alternative keybindings that work in `emacs -nw' running under
-Unix terminals."
-  :lighter " Paredit(nw)"
-  (if (and paredit-mode paredit-terminal-mode)
-      (paredit-mode -1)))
+;;; Minor mode definition
+
+;;; Pretend that this were organized in the natural manner, with the
+;;; most important bit first -- the minor mode definitions --, and then
+;;; the keymaps.  DEFINE-MINOR-MODE doesn't seem to like this, however.
 
 (defvar paredit-mode-map
   (let ((keymap (make-sparse-keymap)))
@@ -151,7 +142,7 @@ Emacs with a window system.")
     ;; Terminal sequences for C-up, C-down, C-M-left, & C-M-down,
     ;; respectively.  (These are the same as in the regular mode map,
     ;; except that Emacs doesn't recognize the correlation between what
-    ;; the terminal sends it and what (KBD "<C-up>") &c. return.
+    ;; the terminal sends it and what KBD gives for "<C-up>") &c.)
     (define-key keymap (kbd "ESC O a")     'backward-up-list)
     (define-key keymap (kbd "ESC O b")     'down-list)
     (define-key keymap (kbd "ESC M-O a")   'up-list)
@@ -160,6 +151,37 @@ Emacs with a window system.")
     keymap)
   "Keymap for the paredit minor mode.
 Works in `emacs -nw' running under Unix terminals.")
+
+(define-minor-mode paredit-mode
+  "Minor mode for pseudo-structurally editing Lisp code.
+Uses keybindings that will not work under a Unix terminal; see
+`paredit-terminal-mode' for an alternative set of keybindings that will
+work in `emacs -nw' running under a Unix terminal.
+
+\\{paredit-mode-map}"
+  :lighter " Paredit")
+
+(define-minor-mode paredit-terminal-mode
+  "Minor mode for pseudo-structurally editing Lisp code.
+Uses alternative keybindings that work in `emacs -nw' running under
+Unix terminals.
+
+\\{paredit-terminal-mode-map}"
+  :lighter " Paredit(nw)")
+
+(defun enable-paredit-mode ()
+  "Turns on paredit mode, or paredit terminal mode if `window-system'
+is nil."
+  (interactive)
+  (if window-system
+      (paredit-mode 1)
+      (paredit-terminal-mode 1)))
+
+(defun disable-paredit-mode ()
+  "Turns off paredit mode or paredit terminal mode."
+  (interactive)
+  (paredit-mode -1)
+  (paredit-terminal-mode -1))
 
 
 
@@ -258,7 +280,8 @@ line after the comment and indented appropriately."
           (save-excursion
             (backward-sexp)
             (forward-sexp)
-            (blink-matching-open))
+            (let ((blink-matching-paren-on-screen t))
+              (blink-matching-open)))
         (scan-error nil))))
 
 (defun paredit-delete-leading-whitespace ()
