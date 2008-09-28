@@ -1,7 +1,7 @@
 ;;; -*- mode: emacs-lisp -*-
 
 ;;;;;; paredit: Parenthesis editing minor mode
-;;;;;; Version 15
+;;;;;; Version 16
 
 ;;; This code is written by Taylor Campbell (except where explicitly
 ;;; noted) and placed in the Public Domain.  All warranties are
@@ -66,7 +66,7 @@
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 15)
+(defconst paredit-version 16)
 
 
 
@@ -86,7 +86,7 @@
     (define-key keymap "\""         'paredit-doublequote)
     (define-key keymap "\\"         'paredit-backslash)
     (define-key keymap ";"          'paredit-semicolon)
-    (define-key keymap "M-;"        'paredit-comment-dwim)
+    (define-key keymap (kbd "M-;")  'paredit-comment-dwim)
 
     ;; This defies ordinary conventions, but I believe it is justified
     ;; and more convenient this way, to have RET be fancy and C-j
@@ -139,7 +139,8 @@
     (define-key keymap (kbd "C-}") 'paredit-forward-barf-sexp)
     (define-key keymap (kbd "C-(") 'paredit-backward-slurp-sexp)
     (define-key keymap (kbd "C-{") 'paredit-backward-barf-sexp)
-    
+    (define-key keymap (kbd "M-S") 'paredit-split-sexp)
+
     keymap)
   "Keymap for the paredit minor mode.
 Does not work in `emacs -nw' running under Unix terminals, only in
@@ -777,6 +778,7 @@ forward past the S-expression following the point."
   (interactive)
   (condition-case ()
       (forward-sexp)
+    ;++ Is it necessary to use UP-LIST and not just FORWARD-CHAR?
     (scan-error (if (paredit-in-string-p) (forward-char) (up-list)))))
 
 (defun paredit-backward ()
@@ -1042,6 +1044,27 @@ it was barfed."
           (lisp-indent-line)
           (indent-sexp))
       (goto-char beg))))
+
+(defun paredit-split-sexp ()
+  "Splits the list or string the point is on into two."
+  (interactive)
+  (cond ((paredit-in-string-p)
+         (delete-horizontal-space)
+         (insert "\"")
+         (save-excursion (insert " \"")))
+        ((or (paredit-in-comment-p)
+             (paredit-in-char-p))
+         (error "Invalid context for `paredit-split-sexp'"))
+        (t (let ((open  (save-excursion (backward-up-list)
+                                        (char-after)))
+                 (close (save-excursion (up-list)
+                                        (char-before))))
+             (delete-horizontal-space)
+             (insert close)
+             (save-excursion (insert ?\ )
+                             (insert open)
+                             (backward-char)
+                             (indent-sexp))))))
 
 
 
