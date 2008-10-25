@@ -988,6 +988,29 @@ If the point is in a string or a comment, fill the paragraph instead,
 
 ;;;; Comment Insertion
 
+;;; This is all a horrible, horrible hack, primarily for GNU Emacs 21,
+;;; in which there is no `comment-or-uncomment-region'.
+
+(autoload 'comment-forward "newcomment")
+(autoload 'comment-normalize-vars "newcomment")
+(autoload 'comment-region "newcomment")
+(autoload 'comment-search-forward "newcomment")
+(autoload 'uncomment-region "newcomment")
+
+(defun paredit-initialize-comment-dwim ()
+  (require 'newcomment)
+  (if (not (fboundp 'comment-or-uncomment-region))
+      (defalias 'comment-or-uncomment-region
+        (lambda (beginning end &optional argument)
+          (interactive "*r\nP")
+          (if (save-excursion (goto-char beginning)
+                              (comment-forward (point-max))
+                              (<= end (point)))
+              (uncomment-region beginning end argument)
+              (comment-region beginning end argument)))))
+  (defalias 'paredit-initialize-comment-dwim 'comment-normalize-vars)
+  (comment-normalize-vars))
+
 (defun paredit-comment-dwim (&optional argument)
   "Call the Lisp comment command you want (Do What I Mean).
 This is like `comment-dwim', but it is specialized for Lisp editing.
@@ -1016,27 +1039,6 @@ At the top level, where indentation is calculated to be at column 0,
              (comment-kill (if (integerp argument) argument nil))
              (comment-indent)))
         (t (paredit-insert-comment))))
-
-;;; This is all a horrible, horrible hack, primarily for GNU Emacs 21,
-;;; in which there is no `comment-or-uncomment-region'.
-
-(defun paredit-initialize-comment-dwim ()
-  (require 'newcomment)
-  (if (not (fboundp 'comment-or-uncomment-region))
-      (defalias 'comment-or-uncomment-region
-        (lambda (beginning end &optional argument)
-          (interactive "*r\nP")
-          (funcall (if (save-excursion (goto-char beginning)
-                                       ;; This is undefined until `newcomment'
-                                       ;; is loaded.  Using `funcall' with a
-                                       ;; symbol shuts up the compiler.
-                                       (funcall 'comment-forward (point-max))
-                                       (<= end (point)))
-                       'uncomment-region
-                     'comment-region)
-                   beginning end argument))))
-  (defalias 'paredit-initialize-comment-dwim 'comment-normalize-vars)
-  (comment-normalize-vars))
 
 (defun paredit-comment-on-line-p ()
   "True if there is a comment on the line following point.
@@ -1049,7 +1051,7 @@ This is expected to be called only in `paredit-comment-dwim'; do not
       ;; COMMENT-P to true; if not, it will be nil.
       (while (progn
                (setq comment-p          ;t -> no error
-                     (funcall 'comment-search-forward (point-at-eol) t))
+                     (comment-search-forward (point-at-eol) t))
                (and comment-p
                     (or (paredit-in-string-p)
                         (paredit-in-char-p (1- (point))))))
