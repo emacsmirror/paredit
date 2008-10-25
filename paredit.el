@@ -1065,35 +1065,28 @@ This is expected to be called only in `paredit-comment-dwim'; do not
         (code-before-p
          (save-excursion (paredit-skip-whitespace nil (point-at-bol))
                          (not (bolp)))))
-    (if (and (bolp)
-             ;; We have to use EQ 0 here and not ZEROP because ZEROP
-             ;; signals an error if its argument is non-numeric, but
-             ;; CALCULATE-LISP-INDENT may return nil.
-             (eq (let ((indent (calculate-lisp-indent)))
-                   (if (consp indent)
-                       (car indent)
-                     indent))
-                 0))
-        ;; Top-level comment
-        (progn (if code-after-p (save-excursion (newline)))
-               (insert ";;; "))
-      (if code-after-p
-          ;; Code comment
-          (progn (if code-before-p
-                     ;++ Why NEWLINE-AND-INDENT here and not just
-                     ;++ NEWLINE, or PAREDIT-NEWLINE?
-                     (newline-and-indent))
+    (cond ((and (bolp)
+                (let ((indent
+                       (let ((indent (calculate-lisp-indent)))
+                         (if (consp indent) (car indent) indent))))
+                  (and indent (zerop indent))))
+           ;; Top-level comment
+           (if code-after-p (save-excursion (newline)))
+           (insert ";;; "))
+          ((or code-after-p (not code-before-p))
+           ;; Code comment
+           (if code-before-p (newline))
+           (lisp-indent-line)
+           (insert ";; ")
+           (if code-after-p
+               (save-excursion
+                 (newline)
                  (lisp-indent-line)
-                 (insert ";; ")
-                 ;; Move the following code.  (NEWLINE-AND-INDENT will
-                 ;; delete whitespace after the comment, though, so use
-                 ;; NEWLINE & LISP-INDENT-LINE manually here.)
-                 (save-excursion (newline)
-                                 (lisp-indent-line)))
-          ;; Margin comment
-          (progn (indent-to comment-column
-                            1)          ; 1 -> force one leading space
-                 (insert ?\; ))))))
+                 (indent-sexp))))
+          (t
+           ;; Margin comment
+           (indent-to comment-column 1) ; 1 -> force one leading space
+           (insert ?\; )))))
 
 ;;;; Character Deletion
 
