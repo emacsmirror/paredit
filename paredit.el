@@ -1039,18 +1039,20 @@ At the top level, where indentation is calculated to be at column 0,
   (comment-normalize-vars))
 
 (defun paredit-comment-on-line-p ()
+  "True if there is a comment on the line following point.
+This is expected to be called only in `paredit-comment-dwim'; do not
+  call it elsewhere."
   (save-excursion
     (beginning-of-line)
     (let ((comment-p nil))
       ;; Search forward for a comment beginning.  If there is one, set
       ;; COMMENT-P to true; if not, it will be nil.
-      (while (progn (setq comment-p
-                          (search-forward ";" (point-at-eol)
-                                          ;; t -> no error
-                                          t))
-                    (and comment-p
-                         (or (paredit-in-string-p)
-                             (paredit-in-char-p (1- (point))))))
+      (while (progn
+               (setq comment-p          ;t -> no error
+                     (funcall 'comment-search-forward (point-at-eol) t))
+               (and comment-p
+                    (or (paredit-in-string-p)
+                        (paredit-in-char-p (1- (point))))))
         (forward-char))
       comment-p)))
 
