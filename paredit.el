@@ -1823,7 +1823,7 @@ If in a string, move the opening double-quote forward by one
 Automatically reindent the newly barfed S-expression with respect to
   its new enclosing form."
   (interactive)
-  (paredit-lose-if-not-in-sexp 'paredit-forward-slurp-sexp)
+  (paredit-lose-if-not-in-sexp 'paredit-forward-barf-sexp)
   (save-excursion
     (up-list)                           ; Up to the end of the list to
     (let ((close (char-before)))        ;   save and delete the closing
@@ -1895,7 +1895,7 @@ If in a string, move the opening double-quote backward by one
 Automatically reindent the barfed S-expression and the form from which
   it was barfed."
   (interactive)
-  (paredit-lose-if-not-in-sexp 'paredit-forward-slurp-sexp)
+  (paredit-lose-if-not-in-sexp 'paredit-backward-barf-sexp)
   (save-excursion
     (backward-up-list)
     (let ((open (char-after)))
