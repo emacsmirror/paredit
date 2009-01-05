@@ -7,7 +7,7 @@
 ;;; THIS FILE IS SUBJECT TO CHANGE, AND NOT SUITABLE FOR DISTRIBUTION
 ;;; BY PACKAGE MANAGERS SUCH AS APT, PKGSRC, MACPORTS, &C.
 
-;;; Copyright (c) 2008, Taylor R. Campbell
+;;; Copyright (c) 2008, 2009, Taylor R. Campbell
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
 ;;; modification, are permitted provided that the following conditions
