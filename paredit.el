@@ -239,6 +239,8 @@ Signal an error if no clause matches."
 ;;;###autoload
 (define-minor-mode paredit-mode
   "Minor mode for pseudo-structurally editing Lisp code.
+With a prefix argument, enable Paredit Mode even if there are
+  imbalanced parentheses in the buffer.
 \\<paredit-mode-map>"
   :lighter " Paredit"
   ;; If we're enabling paredit-mode, the prefix to this code that
