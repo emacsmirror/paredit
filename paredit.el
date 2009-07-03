@@ -60,7 +60,7 @@
 ;;; Toggle Paredit Mode with `M-x paredit-mode RET', or enable it
 ;;; always in a major mode `M' (e.g., `lisp' or `scheme') with:
 ;;;
-;;;   (add-hook M-mode-hook (lambda () (paredit-mode +1)))
+;;;   (add-hook M-mode-hook 'enable-paredit-mode)
 ;;;
 ;;; Customize paredit using `eval-after-load':
 ;;;
@@ -262,19 +262,13 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
             (error (setq paredit-mode nil)
                    (signal (car condition) (cdr condition)))))))
 
-;;; Old functions from when there was a different mode for emacs -nw.
-
 (defun enable-paredit-mode ()
-  "Turn on pseudo-structural editing of Lisp code.
-
-Deprecated: use `paredit-mode' instead."
+  "Turn on pseudo-structural editing of Lisp code."
   (interactive)
   (paredit-mode +1))
 
 (defun disable-paredit-mode ()
-  "Turn off pseudo-structural editing of Lisp code.
-
-Deprecated: use `paredit-mode' instead."
+  "Turn off pseudo-structural editing of Lisp code."
   (interactive)
   (paredit-mode -1))
 
