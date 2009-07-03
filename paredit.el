@@ -791,30 +791,29 @@ If such a comment exists, delete the comment (including all leading
               (insert close))
             (error "Mismatched missing closing delimiter: %c ... %c"
                    open close))))
-  (let ((orig (point)))
-    (up-list)
-    (if (catch 'return                  ; This CATCH returns T if it
-          (while t                      ; should delete leading spaces
-            (save-excursion             ; and NIL if not.
-              (let ((before-paren (1- (point))))
-                (back-to-indentation)
-                (cond ((not (eq (point) before-paren))
-                       ;; Can't call PAREDIT-DELETE-LEADING-WHITESPACE
-                       ;; here -- we must return from SAVE-EXCURSION
-                       ;; first.
-                       (throw 'return t))
-                      ((save-excursion (forward-line -1)
-                                       (end-of-line)
-                                       (paredit-in-comment-p))
-                       ;; Moving the closing delimiter any further
-                       ;; would put it into a comment, so we just
-                       ;; indent the closing delimiter where it is and
-                       ;; abort the loop, telling its continuation that
-                       ;; no leading whitespace should be deleted.
-                       (lisp-indent-line)
-                       (throw 'return nil))
-                      (t (delete-indentation)))))))
-        (paredit-delete-leading-whitespace))))
+  (up-list)
+  (if (catch 'return                    ; This CATCH returns T if it
+        (while t                        ; should delete leading spaces
+          (save-excursion               ; and NIL if not.
+            (let ((before-paren (1- (point))))
+              (back-to-indentation)
+              (cond ((not (eq (point) before-paren))
+                     ;; Can't call PAREDIT-DELETE-LEADING-WHITESPACE
+                     ;; here -- we must return from SAVE-EXCURSION
+                     ;; first.
+                     (throw 'return t))
+                    ((save-excursion (forward-line -1)
+                                     (end-of-line)
+                                     (paredit-in-comment-p))
+                     ;; Moving the closing delimiter any further
+                     ;; would put it into a comment, so we just
+                     ;; indent the closing delimiter where it is and
+                     ;; abort the loop, telling its continuation that
+                     ;; no leading whitespace should be deleted.
+                     (lisp-indent-line)
+                     (throw 'return nil))
+                    (t (delete-indentation)))))))
+      (paredit-delete-leading-whitespace)))
 
 (defun paredit-missing-close ()
   (save-excursion
