@@ -1082,7 +1082,7 @@ This is expected to be called only in `paredit-comment-dwim'; do not
                (save-excursion
                  (newline)
                  (lisp-indent-line)
-                 (indent-sexp))))
+                 (paredit-ignore-sexp-errors (indent-sexp)))))
           (t
            ;; Margin comment
            (indent-to comment-column 1) ; 1 -> force one leading space
