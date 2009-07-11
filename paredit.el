@@ -1908,7 +1908,6 @@ If in a string, move the opening double-quote backward by one
   (save-excursion (backward-sexp))
   (let ((open (char-after))
         (target (point)))
-    (message "open = %S" open)
     (delete-char 1)
     (backward-sexp)
     (insert open)
