@@ -780,7 +780,10 @@ If such a comment exists, delete the comment (including all leading
        (memq (char-syntax (if endp (char-after) (char-before)))
              (list ?w ?_ ?\"
                    (let ((matching (matching-paren delimiter)))
-                     (and matching (char-syntax matching)))))))
+                     (and matching (char-syntax matching)))
+                   (and (not endp)
+                        (eq ?\" (char-syntax delimiter))
+                        ?\) )))))
 
 (defun paredit-move-past-close-and-reindent (close)
   (let ((open (paredit-missing-close)))
