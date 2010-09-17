@@ -962,25 +962,40 @@ If not in a string, act as `paredit-doublequote'; if no prefix argument
     (insert char)                       ; (Is there a better way to
     nil))                               ; express the rubout char?
                                         ; ?\^? works, but ugh...)
-
-;;; The placement of these functions in this file is totally random.
-
+
 (defun paredit-newline ()
   "Insert a newline and indent it.
 This is like `newline-and-indent', but it not only indents the line
   that the point is on but also the S-expression following the point,
   if there is one.
 Move forward one character first if on an escaped character.
-If in a string, just insert a literal newline."
+If in a string, just insert a literal newline.
+If in a comment and if followed by invalid structure, call
+  `indent-new-comment-line' to keep the invalid structure in a
+  comment."
   (interactive)
-  (if (paredit-in-string-p)
-      (newline)
-    (if (and (not (paredit-in-comment-p)) (paredit-in-char-p))
-        (forward-char))
-    (newline-and-indent)
-    ;; Indent the following S-expression, but don't signal an error if
-    ;; there's only a closing delimiter after the point.
-    (paredit-ignore-sexp-errors (indent-sexp))))
+  (cond ((paredit-in-string-p)
+         (newline))
+        ((paredit-in-comment-p)
+         (if (paredit-handle-sexp-errors
+                 ;; Check for anything that would break structure in
+                 ;; the comment.
+                 (save-restriction
+                   (narrow-to-region (point) (point-at-eol))
+                   (save-excursion
+                     (while (< (point) (point-max))
+                       (forward-sexp)))
+                   t)
+               nil)
+             (progn (newline-and-indent) (indent-sexp))
+             (indent-new-comment-line)))
+        (t
+         (if (paredit-in-char-p)
+             (forward-char))
+         (newline-and-indent)
+         ;; Indent the following S-expression, but don't signal an
+         ;; error if there's only a closing delimiter after the point.
+         (paredit-ignore-sexp-errors (indent-sexp)))))
 
 (defun paredit-reindent-defun (&optional argument)
   "Reindent the definition that the point is on.
