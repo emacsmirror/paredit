@@ -1091,7 +1091,7 @@ This is expected to be called only in `paredit-comment-dwim'; do not
                (save-excursion
                  (newline)
                  (lisp-indent-line)
-                 (paredit-ignore-sexp-errors (indent-sexp)))))
+                 (paredit-indent-sexps))))
           (t
            ;; Margin comment
            (indent-to comment-column 1) ; 1 -> force one leading space
@@ -1643,16 +1643,23 @@ Inside a string, unescape all backslashes, or signal an error if doing
   (interactive "P")
   (if (paredit-in-string-p)
       (paredit-splice-string argument)
-    (save-excursion
-      (paredit-kill-surrounding-sexps-for-splice argument)
-      (backward-up-list)                ; Go up to the beginning...
       (save-excursion
-        (forward-sexp)                  ; Go forward an expression, to
-        (backward-delete-char 1))       ;   delete the end delimiter.
-      (delete-char 1)                   ; ...to delete the open char.
-      (paredit-ignore-sexp-errors
-        (backward-up-list)               ; Reindent, now that the
-        (indent-sexp)))))                ;   structure has changed.
+        (paredit-kill-surrounding-sexps-for-splice argument)
+        (let ((end (point)))
+          (backward-up-list)            ; Go up to the beginning...
+          (save-excursion
+            (forward-char 1)            ; (Skip over leading whitespace
+            (paredit-skip-whitespace t end)
+            (setq end (point)))         ;   for the `delete-region'.)
+          (let ((indent-start nil) (indent-end nil))
+            (save-excursion
+              (setq indent-start (point))
+              (forward-sexp)            ; Go forward an expression, to
+              (backward-delete-char 1)  ;   delete the end delimiter.
+              (setq indent-end (point)))
+            (delete-region (point) end) ; ...to delete the open char.
+            ;; Reindent only the region we preserved.
+            (indent-region indent-start indent-end))))))
 
 (defun paredit-kill-surrounding-sexps-for-splice (argument)
   (cond ((or (paredit-in-string-p)
@@ -1704,13 +1711,13 @@ With a prefix argument N, kill only the following N S-expressions."
                            (- (prefix-numeric-value n))
                            '(16))))
 
-(defun paredit-raise-sexp (&optional n)
+(defun paredit-raise-sexp (&optional argument)
   "Raise the following S-expression in a tree, deleting its siblings.
 With a prefix argument N, raise the following N S-expressions.  If N
   is negative, raise the preceding N S-expressions.
 If the point is on an S-expression, such as a string or a symbol, not
   between them, that S-expression is considered to follow the point."
-  (interactive "p")
+  (interactive "P")
   (save-excursion
     (cond ((paredit-in-string-p)
            (goto-char (car (paredit-string-start+end-points))))
@@ -1719,21 +1726,19 @@ If the point is on an S-expression, such as a string or a symbol, not
           ((paredit-in-comment-p)
            (error "No S-expression to raise in comment.")))
     ;; Select the S-expressions we want to raise in a buffer substring.
-    (let* ((bound (save-excursion (forward-sexp n) (point)))
-           (sexps (if (and n (< n 0))
-                      (buffer-substring bound
-                                        (paredit-point-at-sexp-end))
-                      (buffer-substring (paredit-point-at-sexp-start)
-                                        bound))))
+    (let* ((n (prefix-numeric-value argument))
+           (bound (scan-sexps (point) n))
+           (sexps
+            (if (< n 0)
+                (buffer-substring bound (paredit-point-at-sexp-end))
+                (buffer-substring (paredit-point-at-sexp-start) bound))))
       ;; Move up to the list we're raising those S-expressions out of and
       ;; delete it.
       (backward-up-list)
-      (delete-region (point) (save-excursion (forward-sexp) (point)))
-      (save-excursion (insert sexps))   ; Insert & reindent the sexps.
-      (save-excursion (let ((n (abs (or n 1))))
-                        (while (> n 0)
-                          (paredit-forward-and-indent)
-                          (setq n (1- n))))))))
+      (delete-region (point) (scan-sexps (point) 1))
+      (let* ((indent-start (point))
+             (indent-end (save-excursion (insert sexps) (point))))
+        (indent-region indent-start indent-end)))))
 
 (defun paredit-convolute-sexp (&optional n)
   "Convolute S-expressions.
@@ -2075,14 +2080,18 @@ Assumes that `paredit-in-string-p' is false, so that it need not handle
     (and (eq (char-before argument) ?\\ )
          (not (eq (char-before (1- argument)) ?\\ )))))
 
+(defun paredit-indent-sexps ()
+  "If in a list, indent all following S-expressions in the list."
+  (let ((start (point))
+        (end (paredit-handle-sexp-errors (progn (up-list) (point)) nil)))
+    (if end
+        (indent-region start end))))
+
 (defun paredit-forward-and-indent ()
-  "Move forward an S-expression, indenting it fully.
-Indent with `lisp-indent-line' and then `indent-sexp'."
-  (forward-sexp)                        ; Go forward, and then find the
-  (save-excursion                       ;   beginning of this next
-    (backward-sexp)                     ;   S-expression.
-    (lisp-indent-line)                  ; Indent its opening line, and
-    (indent-sexp)))                     ;   the rest of it.
+  "Move forward an S-expression, indenting it with `indent-region'."
+  (let ((start (point)))
+    (forward-sexp)
+    (indent-region start (point))))
 
 (defun paredit-skip-whitespace (trailing-p &optional limit)
   "Skip past any whitespace, or until the point LIMIT is reached.
