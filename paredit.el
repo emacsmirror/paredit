@@ -323,6 +323,15 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                  "(string #\\x|)")
                 ("\"foo|bar\"\n  ; Escaping character... (\")"
                  "\"foo\\\"|bar\""))
+   (";"         paredit-semicolon
+                ("|(frob grovel)"
+                 ";|(frob grovel)")
+                ("(frob |grovel)"
+                 "(frob ;grovel\n)")
+                ("(frob |grovel (bloit\n               zargh))"
+                 "(frob ;|grovel\n (bloit\n  zargh))")
+                ("(frob grovel)          |"
+                 "(frob grovel)          ;|"))
    ("M-;"       paredit-comment-dwim
                 ("(foo |bar)   ; baz"
                  "(foo bar)                               ; |baz")
@@ -1012,6 +1021,64 @@ If the point is in a string or a comment, fill the paragraph instead,
 
 ;;;; Comment Insertion
 
+(defun paredit-semicolon (&optional n)
+  "Insert a semicolon.
+With a prefix argument N, insert N semicolons.
+If in a string, do just that and nothing else.
+If in a character literal, move to the beginning of the character
+  literal before inserting the semicolon.
+If the enclosing list ends on the line after the point, break the line
+  after the last S-expression following the point.
+If a list begins on the line after the point but ends on a different
+  line, break the line after the last S-expression following the point
+  before the list."
+  (interactive "p")
+  (if (or (paredit-in-string-p) (paredit-in-comment-p))
+      (insert (make-string (or n 1) ?\; ))
+    (if (paredit-in-char-p)
+        (backward-char 2))
+    (let ((line-break-point (paredit-semicolon-find-line-break-point)))
+      (if line-break-point
+          (paredit-semicolon-with-line-break line-break-point (or n 1))
+          (insert (make-string (or n 1) ?\; ))))))
+
+(defun paredit-semicolon-find-line-break-point ()
+  (let ((line-break-point nil)
+        (eol (point-at-eol)))
+    (and (save-excursion
+           (paredit-handle-sexp-errors
+               (progn
+                 (while
+                     (progn
+                       (setq line-break-point (point))
+                       (forward-sexp)
+                       (and (eq eol (point-at-eol))
+                            (not (eobp)))))
+                 (backward-sexp)
+                 (eq eol (point-at-eol)))
+             ;; If we hit the end of an expression, but the closing
+             ;; delimiter is on another line, don't break the line.
+             (save-excursion
+               (paredit-skip-whitespace t (point-at-eol))
+               (not (or (eolp) (eq (char-after) ?\; ))))))
+         line-break-point)))
+
+(defun paredit-semicolon-with-line-break (line-break-point n)
+  (let ((line-break-marker (make-marker)))
+    (set-marker line-break-marker line-break-point)
+    (set-marker-insertion-type line-break-marker t)
+    (insert (make-string (or n 1) ?\; ))
+    (save-excursion
+      (goto-char line-break-marker)
+      (set-marker line-break-marker nil)
+      (newline)
+      (lisp-indent-line)
+      ;; This step is redundant if we are inside a list, but even if we
+      ;; are at the top level, we want at least to indent whatever we
+      ;; bumped off the line.
+      (paredit-ignore-sexp-errors (indent-sexp))
+      (paredit-indent-sexps))))
+
 ;;; This is all a horrible, horrible hack, primarily for GNU Emacs 21,
 ;;; in which there is no `comment-or-uncomment-region'.
 
