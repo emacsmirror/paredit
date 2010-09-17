@@ -38,12 +38,12 @@
 ;;; directory of your choice, and adding to your .emacs file:
 ;;;
 ;;;   (add-to-list 'load-path "/path/to/elisp")
-;;;   (autoload 'paredit-mode "paredit"
-;;;     "Minor mode for pseudo-structurally editing Lisp code."
+;;;   (autoload 'enable-paredit-mode "paredit"
+;;;     "Turn on pseudo-structural editing of Lisp code."
 ;;;     t)
 ;;;
-;;; Toggle Paredit Mode with `M-x paredit-mode RET', or enable it
-;;; always in a major mode `M' (e.g., `lisp' or `scheme') with:
+;;; Enable Paredit Mode on the fly with `M-x enable-paredit-mode RET',
+;;; or always enable it in a major mode `M' (e.g., `lisp') with:
 ;;;
 ;;;   (add-hook M-mode-hook 'enable-paredit-mode)
 ;;;
@@ -86,8 +86,8 @@
 ;;;       or spaces, &c.
 ;;;
 ;;; It is often extremely difficult to reproduce problems, especially
-;;; with commands like `paredit-kill'.  If you do not supply **ALL** of
-;;; this information, then it is highly probable that I cannot
+;;; with commands such as `paredit-kill'.  If you do not supply **ALL**
+;;; of this information, then it is highly probable that I cannot
 ;;; reproduce your problem no matter how hard I try, and the effect of
 ;;; submitting a bug without this information is only to waste your
 ;;; time and mine.  So, please, include all of the above information.
