@@ -1356,13 +1356,9 @@ With a numeric prefix argument N, do `kill-line' that many times."
       ;; Be careful not to split an escape sequence.
       (if (paredit-in-string-escape-p)
           (backward-char))
-      (let ((beginning (point)))
-        (while (not (or (eolp) (eq ?\" (char-syntax (char-after)))))
-          (forward-char)
-          ;; Skip past escaped characters.
-          (if (eq (char-before) ?\\ )
-              (forward-char)))
-        (kill-region beginning (point))))))
+      (kill-region (point)
+                   (min (point-at-eol)
+                        (cdr (paredit-string-start+end-points)))))))
 
 (defun paredit-kill-sexps-on-line ()
   (if (paredit-in-char-p)               ; Move past the \ and prefix.
