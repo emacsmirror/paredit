@@ -1673,7 +1673,8 @@ If that text is imbalanced, signal an error instead."
                (cond ((and (integerp beginning-comment-state)
                            (integerp end-comment-state))
                       (format "depth %S at start, depth %S at end."
-                              beginning-comment-state))
+                              beginning-comment-state
+                              end-comment-state))
                      ((integerp beginning-comment-state)
                       "start in nested comment, end otherwise.")
                      ((integerp end-comment-state)
