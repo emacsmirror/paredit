@@ -1551,6 +1551,28 @@ With a numeric prefix argument N, do `kill-line' that many times."
 (defun paredit-copy-as-kill ()
   "Save in the kill ring the region that `paredit-kill' would kill."
   (interactive)
+  (cond ((paredit-in-string-p)
+         (paredit-copy-as-kill-in-string))
+        ((paredit-in-comment-p)
+         (copy-region-as-kill (point) (point-at-eol)))
+        ((save-excursion (paredit-skip-whitespace t (point-at-eol))
+                         (or (eolp) (eq (char-after) ?\; )))
+         ;** Be careful about trailing backslashes.
+         (save-excursion
+           (if (paredit-in-char-p)
+               (backward-char))
+           (copy-region-as-kill (point) (point-at-eol))))
+        (t (paredit-copy-sexps-as-kill))))
+
+(defun paredit-copy-as-kill-in-string ()
+  (save-excursion
+    (if (paredit-in-string-escape-p)
+        (backward-char))
+    (copy-region-as-kill (point)
+                         (min (point-at-eol)
+                              (cdr (paredit-string-start+end-points))))))
+
+(defun paredit-copy-sexps-as-kill ()
   (save-excursion
     (if (paredit-in-char-p)
         (backward-char 2))
