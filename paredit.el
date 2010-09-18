@@ -1357,8 +1357,7 @@ With a numeric prefix argument N, do `kill-line' that many times."
       (if (paredit-in-string-escape-p)
           (backward-char))
       (let ((beginning (point)))
-        (while (not (or (eolp)
-                        (eq (char-after) ?\" )))
+        (while (not (or (eolp) (eq ?\" (char-syntax (char-after)))))
           (forward-char)
           ;; Skip past escaped characters.
           (if (eq (char-before) ?\\ )
