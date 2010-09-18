@@ -403,10 +403,10 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                  "(foo |(bar baz) quux)")
                 ("(|(foo) bar)"
                  "|((foo) bar)"))
-;;;("C-M-u"     backward-up-list)       ; These two are built-in.
-;;;("C-M-d"     down-list)
-   ("C-M-p"     backward-down-list)     ; Built-in, these are FORWARD-
-   ("C-M-n"     up-list)                ; & BACKWARD-LIST, which have
+   ("C-M-u"     paredit-backward-up)
+   ("C-M-d"     paredit-forward-down)
+   ("C-M-p"     paredit-backward-down)  ; Built-in, these are FORWARD-
+   ("C-M-n"     paredit-forward-up)     ; & BACKWARD-LIST, which have
                                         ; no need given C-M-f & C-M-b.
 
    "Depth-Changing Commands"
@@ -1654,6 +1654,103 @@ With a prefix argument N, encompass all N S-expressions forward."
   (interactive)
   (beginning-of-defun)
   (recenter 0))
+
+;;;; Generalized Upward/Downward Motion
+
+(defun paredit-up/down (n vertical-direction)
+  (let ((horizontal-direction (if (< 0 n) +1 -1)))
+    (while (/= n 0)
+      (goto-char
+       (paredit-next-up/down-point horizontal-direction vertical-direction))
+      (setq n (- n horizontal-direction)))))
+
+(defun paredit-next-up/down-point (horizontal-direction vertical-direction)
+  (let ((state (paredit-current-parse-state))
+        (scan-lists
+         (lambda ()
+           (scan-lists (point) horizontal-direction vertical-direction))))
+    (cond ((paredit-in-string-p state)
+           (let ((start+end (paredit-string-start+end-points state)))
+             (if (< 0 vertical-direction)
+                 (if (< 0 horizontal-direction)
+                     (+ 1 (cdr start+end))
+                     (car start+end))
+                 ;; We could let the user try to descend into lists
+                 ;; within the string, but that would be asymmetric
+                 ;; with the up case, which rises out of the whole
+                 ;; string and not just out of a list within the
+                 ;; string, so this case will just be an error.
+                 (error "Can't descend further into string."))))
+          ((< 0 vertical-direction)
+           ;; When moving up, just try to rise up out of the list.
+           (or (funcall scan-lists)
+               (buffer-end horizontal-direction)))
+          ((< vertical-direction 0)
+           ;; When moving down, look for a string closer than a list,
+           ;; and use that if we find it.
+           (let* ((list-start
+                   (paredit-handle-sexp-errors (funcall scan-lists) nil))
+                  (string-start
+                   (paredit-find-next-string-start horizontal-direction
+                                                   list-start)))
+             (if (and string-start list-start)
+                 (if (< 0 horizontal-direction)
+                     (min string-start list-start)
+                     (max string-start list-start))
+                 (or string-start
+                     ;; Scan again: this is a kludgey way to report the
+                     ;; error if there really was one.
+                     (funcall scan-lists)
+                     (buffer-end horizontal-direction)))))
+          (t
+           (error "Vertical direction must be nonzero in `%s'."
+                  'paredit-up/down)))))
+
+(defun paredit-find-next-string-start (horizontal-direction limit)
+  (let ((next-char (if (< 0 horizontal-direction) 'char-after 'char-before))
+        (pastp (if (< 0 horizontal-direction) '< '>)))
+    (paredit-handle-sexp-errors
+        (save-excursion
+          (catch 'exit
+            (while t
+              (if (and limit (funcall pastp (point) limit))
+                  (throw 'exit nil))
+              (forward-sexp horizontal-direction)
+              (save-excursion
+                (backward-sexp horizontal-direction)
+                (if (eq ?\" (char-syntax (funcall next-char)))
+                    (throw 'exit (+ (point) horizontal-direction)))))))
+      nil)))
+
+(defun paredit-forward-down (&optional argument)
+  "Move forward down into a list.
+With a positive argument, move forward down that many levels.
+With a negative argument, move backward down that many levels."
+  (interactive "p")
+  (paredit-up/down (or argument +1) -1))
+
+(defun paredit-backward-up (&optional argument)
+  "Move backward up out of the enclosing list.
+With a positive argument, move backward up that many levels.
+With a negative argument, move forward up that many levels.
+If in a string initially, that counts as one level."
+  (interactive "p")
+  (paredit-up/down (- 0 (or argument +1)) +1))
+
+(defun paredit-forward-up (&optional argument)
+  "Move forward up out of the enclosing list.
+With a positive argument, move forward up that many levels.
+With a negative argument, move backward up that many levels.
+If in a string initially, that counts as one level."
+  (interactive "p")
+  (paredit-up/down (or argument +1) +1))
+
+(defun paredit-backward-down (&optional argument)
+  "Move backward down into a list.
+With a positive argument, move backward down that many levels.
+With a negative argument, move forward down that many levels."
+  (interactive "p")
+  (paredit-up/down (- 0 (or argument +1)) -1))
 
 ;;;; Depth-Changing Commands:  Wrapping, Splicing, & Raising
 
