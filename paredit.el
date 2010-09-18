@@ -1341,10 +1341,8 @@ With a numeric prefix argument N, do `kill-line' that many times."
          (paredit-kill-line-in-string))
         ((paredit-in-comment-p)
          (kill-line))
-        ((save-excursion
-           (paredit-skip-whitespace t (point-at-eol))
-           (or (eq (char-after) ?\; )
-               (eolp)))
+        ((save-excursion (paredit-skip-whitespace t (point-at-eol))
+                         (or (eolp) (eq (char-after) ?\; )))
          ;** Be careful about trailing backslashes.
          (if (paredit-in-char-p)
              (backward-char))
