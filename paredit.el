@@ -1593,6 +1593,112 @@ With a numeric prefix argument N, do `kill-line' that many times."
                                    (t
                                     (point))))))))
 
+;;;; Safe Region Killing/Copying
+
+;;; This is an experiment.  It's not enough: `paredit-kill-ring-save'
+;;; is always safe; it's `yank' that's not safe, but even trickier to
+;;; implement than `paredit-kill-region'.  Also, the heuristics for
+;;; `paredit-kill-region' are slightly too conservative -- they will
+;;; sometimes reject killing regions that would be safe to kill.
+;;; (Consider, e,g., a region that starts in a comment and ends in the
+;;; middle of a symbol at the end of a line: that's safe to kill, but
+;;; `paredit-kill-region' won't allow it.)  I don't know whether they
+;;; are too liberal: I haven't constructed a region that is unsafe to
+;;; kill but which `paredit-kill-region' will kill, but I haven't ruled
+;;; out the possibility either.
+
+(defun paredit-kill-ring-save (beginning end)
+  "Save the balanced region, but don't kill it, like `kill-ring-save'.
+If the text of the region is imbalanced, signal an error instead.
+With a prefix argument, disregard any imbalance."
+  (interactive "r")
+  (if (not current-prefix-arg)
+      ;; Check that the region is balanced.
+      (save-restriction
+        (narrow-to-region beginning end)
+        (if (fboundp 'check-parens)
+            (check-parens)
+            (save-excursion
+              (goto-char (point-min))
+              (while (not (eobp))
+                (forward-sexp))))))
+  (setq this-command 'kill-ring-save)
+  (kill-ring-save beginning end))
+
+(defun paredit-kill-region (beginning end &optional yank-handler)
+  "Kill balanced text between point and mark, like `kill-region'.
+If that text is imbalanced, signal an error instead."
+  (interactive "r")
+  (if (and beginning end)
+      ;; Check that region begins and ends in a sufficiently similar
+      ;; state, so that deleting it will leave the buffer balanced.
+      (save-excursion
+        (goto-char beginning)
+        (let* ((state (paredit-current-parse-state))
+               (state* (parse-partial-sexp beginning end nil nil state)))
+          (paredit-check-region-state state state*))))
+  (setq this-command 'kill-region)
+  (kill-region beginning end yank-handler))
+
+(defun paredit-check-region-state (beginning-state end-state)
+  (paredit-check-region-state-depth beginning-state end-state)
+  (paredit-check-region-state-string beginning-state end-state)
+  (paredit-check-region-state-comment beginning-state end-state)
+  (paredit-check-region-state-char-quote beginning-state end-state))
+
+(defun paredit-check-region-state-depth (beginning-state end-state)
+  (let ((beginning-depth (nth 0 beginning-state))
+        (end-depth (nth 0 end-state)))
+    (if (not (= beginning-depth end-depth))
+        (error "Mismatched parenthesis depth: %S at start, %S at end."
+               beginning-depth
+               end-depth))))
+
+(defun paredit-check-region-state-string (beginning-state end-state)
+  (let ((beginning-string-p (nth 3 beginning-state))
+        (end-string-p (nth 3 end-state)))
+    (if (not (eq beginning-string-p end-string-p))
+        (error "Mismatched string state: start %sin string, end %sin string."
+               (if beginning-string-p "" "not ")
+               (if end-string-p "" "not ")))))
+
+(defun paredit-check-region-state-comment (beginning-state end-state)
+  (let ((beginning-comment-state (nth 4 beginning-state))
+        (end-comment-state (nth 4 end-state)))
+    (if (not (or (eq beginning-comment-state end-comment-state)
+                 (and (eq beginning-comment-state nil)
+                      (eq end-comment-state t)
+                      (eolp))))
+        (error "Mismatched comment state: %s"
+               (cond ((and (integerp beginning-comment-state)
+                           (integerp end-comment-state))
+                      (format "depth %S at start, depth %S at end."
+                              beginning-comment-state))
+                     ((integerp beginning-comment-state)
+                      "start in nested comment, end otherwise.")
+                     ((integerp end-comment-state)
+                      "end in nested comment, start otherwise.")
+                     (beginning-comment-state
+                      "start in comment, end not in comment.")
+                     (end-comment-state
+                      "end in comment, start not in comment.")
+                     (t
+                      (format "start %S, end %S."
+                              beginning-comment-state
+                              end-comment-state)))))))
+
+(defun paredit-check-region-state-char-quote (beginning-state end-state)
+  (let ((beginning-char-quote (nth 5 beginning-state))
+        (end-char-quote (nth 5 end-state)))
+    (if (not (eq beginning-char-quote end-char-quote))
+        (let ((phrase "character quotation"))
+          (error "Mismatched %s: start %sin %s, end %sin %s."
+                 phrase
+                 (if beginning-char-quote "" "not ")
+                 phrase
+                 (if end-char-quote "" "not ")
+                 phrase)))))
+
 ;;;; Cursor and Screen Movement
 
 (eval-and-compile
