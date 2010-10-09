@@ -3,9 +3,13 @@
 ;; Copyright (C) 2005--2010 Taylor R. Campbell
 
 ;; Author: Taylor R. Campbell
-;; Version: 22
+;; Version: 23 (beta)
 ;; Created: 2005-07-31
 ;; Keywords: lisp
+
+;; NOTE:  THIS IS A BETA VERSION OF PAREDIT.  USE AT YOUR OWN RISK.
+;; THIS FILE IS SUBJECT TO CHANGE, AND NOT SUITABLE FOR DISTRIBUTION
+;; BY PACKAGE MANAGERS SUCH AS APT, PKGSRC, MACPORTS, &C.
 
 ;; Paredit is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
@@ -21,7 +25,7 @@
 ;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; This file is permanently stored at
-;;;   <http://mumble.net/~campbell/emacs/paredit-22.el>.
+;;;   <http://mumble.net/~campbell/emacs/paredit-23.el>.
 ;;;
 ;;; The currently released version of paredit is available at
 ;;;   <http://mumble.net/~campbell/emacs/paredit.el>.
@@ -161,8 +165,8 @@
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 22)
-(defconst paredit-beta-p nil)
+(defconst paredit-version 23)
+(defconst paredit-beta-p t)
 
 (eval-and-compile
 
