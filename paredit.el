@@ -1,26 +1,28 @@
-;;; -*- Mode: Emacs-Lisp; outline-regexp: "\n;;;;+" -*-
+;;; paredit.el --- minor mode for editing parentheses  -*- Mode: Emacs-Lisp -*-
 
-;;;;;; Paredit: Parenthesis-Editing Minor Mode
-;;;;;; Version 22 (beta)
+;; Copyright (C) 2005--2010 Taylor R. Campbell
 
-;;; NOTE:  THIS IS A BETA VERSION OF PAREDIT.  USE AT YOUR OWN RISK.
-;;; THIS FILE IS SUBJECT TO CHANGE, AND NOT SUITABLE FOR DISTRIBUTION
-;;; BY PACKAGE MANAGERS SUCH AS APT, PKGSRC, MACPORTS, &C.
+;; Author: Taylor R. Campbell
+;; Version: 22 (beta)
+;; Created: 2005-07-31
+;; Keywords: lisp
 
-;;; Copyright (c) 2005--2010, Taylor R. Campbell
-;;;
-;;; Paredit is free software: you can redistribute it and/or modify it
-;;; under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation, either version 3 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; Paredit is distributed in the hope that it will be useful, but
-;;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;;; General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License
-;;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
+;; NOTE:  THIS IS A BETA VERSION OF PAREDIT.  USE AT YOUR OWN RISK.
+;; THIS FILE IS SUBJECT TO CHANGE, AND NOT SUITABLE FOR DISTRIBUTION
+;; BY PACKAGE MANAGERS SUCH AS APT, PKGSRC, MACPORTS, &C.
+
+;; Paredit is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; Paredit is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; This file is permanently stored at
 ;;;   <http://mumble.net/~campbell/emacs/paredit-22.el>.
@@ -2510,3 +2512,9 @@ If no parse state is supplied, compute one from the beginning of the
 (paredit-annotate-functions-with-examples)
 
 (provide 'paredit)
+
+;;; Local Variables:
+;;; outline-regexp: "\n;;;;+"
+;;; End:
+
+;;; paredit.el ends here
