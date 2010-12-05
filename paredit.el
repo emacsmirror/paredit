@@ -989,7 +989,8 @@ If in a comment and if followed by invalid structure, call
          (newline))
         ((paredit-in-comment-p)
          (if (paredit-region-ok-p (point) (point-at-eol))
-             (progn (newline-and-indent) (indent-sexp))
+             (progn (newline-and-indent)
+                    (paredit-ignore-sexp-errors (indent-sexp)))
              (indent-new-comment-line)))
         (t
          (if (paredit-in-char-p)
