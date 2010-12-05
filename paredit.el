@@ -1611,7 +1611,7 @@ With a prefix argument, disregard any imbalance."
   (setq this-command 'kill-ring-save)
   (kill-ring-save beginning end))
 
-(defun paredit-kill-region (beginning end &optional yank-handler)
+(defun paredit-kill-region (beginning end)
   "Kill balanced text between point and mark, like `kill-region'.
 If that text is imbalanced, signal an error instead."
   (interactive "r")
@@ -1624,7 +1624,7 @@ If that text is imbalanced, signal an error instead."
                (state* (parse-partial-sexp beginning end nil nil state)))
           (paredit-check-region-state state state*))))
   (setq this-command 'kill-region)
-  (kill-region beginning end yank-handler))
+  (kill-region beginning end))
 
 (defun paredit-check-region-state (beginning-state end-state)
   (paredit-check-region-state-depth beginning-state end-state)
