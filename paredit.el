@@ -1736,10 +1736,8 @@ With a prefix argument N, encompass all N S-expressions forward."
     (forward-sexp n)
     (let ((end-point (point)))
       (backward-sexp n)
-      (let* ((start-point (point))
-             (start-line (count-lines (point-min) (point)))
-             (lines-on-sexps (count-lines start-point end-point)))
-        (goto-line (+ start-line (/ lines-on-sexps 2)))
+      (let ((start-point (point)))
+        (forward-line (/ (count-lines start-point end-point) 2))
         (recenter)))))
 
 (defun paredit-focus-on-defun ()
