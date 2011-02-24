@@ -92,66 +92,63 @@
 ;;;     and I can't fathom any reason why you might be using them.  So
 ;;;     the answer to item (2) should be either `release' or `beta'.
 
-;;; The paredit minor mode, Paredit Mode, binds a number of simple
-;;; keys, notably `(', `)', `"', and `\', to commands that more
-;;; carefully insert S-expression structures in the buffer.  The
-;;; parenthesis delimiter keys (round or square) are defined to insert
-;;; parenthesis pairs and move past the closing delimiter,
-;;; respectively; the double-quote key is multiplexed to do both, and
-;;; also to insert an escape if within a string; and backslashes prompt
-;;; the user for the next character to input, because a lone backslash
-;;; can break structure inadvertently.  These all have their ordinary
-;;; behaviour when inside comments, and, outside comments, if truly
-;;; necessary, you can insert them literally with `C-q'.
+;;; The paredit minor mode, Paredit Mode, binds common character keys,
+;;; such as `(', `)', `"', and `\', to commands that carefully insert
+;;; S-expression structures in the buffer:
 ;;;
-;;; The key bindings are designed so that when typing new code in
-;;; Paredit Mode, you can generally use exactly the same keystrokes as
-;;; you would have used without Paredit Mode.  Earlier versions of
-;;; paredit.el did not conform to this, because Paredit Mode bound `)'
-;;; to a command that would insert a newline.  Now `)' is bound to a
-;;; command that does not insert a newline, and `M-)' is bound to the
-;;; command that inserts a newline.  To revert to the former behaviour,
-;;; add the following forms to an `eval-after-load' form for paredit.el
-;;; in your .emacs file:
+;;;   ( inserts `()', leaving the point in the middle;
+;;;   ) moves the point over the next closing delimiter;
+;;;   " inserts `""' if outside a string, or inserts an escaped
+;;;      double-quote if in the middle of a string, or moves over the
+;;;      closing double-quote if at the end of a string; and
+;;;   \ prompts for the character to escape, to avoid inserting lone
+;;;      backslashes that may break structure.
 ;;;
-;;;   (define-key paredit-mode-map (kbd ")")
-;;;     'paredit-close-round-and-newline)
-;;;   (define-key paredit-mode-map (kbd "M-)")
-;;;     'paredit-close-round)
+;;; In comments, these keys insert themselves.  If necessary, you can
+;;; insert these characters literally outside comments by pressing
+;;; `C-q' before these keys, in case a mistake has broken the
+;;; structure.
 ;;;
-;;; Paredit Mode also binds the usual keys for deleting and killing, so
-;;; that they will not destroy any S-expression structure by killing or
-;;; deleting only one side of a parenthesis or quote pair.  If the
-;;; point is on a closing delimiter, `DEL' will move left over it; if
-;;; it is on an opening delimiter, `C-d' will move right over it.  Only
-;;; if the point is between a pair of delimiters will `C-d' or `DEL'
-;;; delete them, and in that case it will delete both simultaneously.
-;;; `M-d' and `M-DEL' kill words, but skip over any S-expression
-;;; structure.  `C-k' kills from the start of the line, either to the
-;;; line's end, if it contains only balanced expressions; to the first
-;;; closing delimiter, if the point is within a form that ends on the
-;;; line; or up to the end of the last expression that starts on the
-;;; line after the point.
+;;; These key bindings are designed so that when typing new code in
+;;; Paredit Mode, you can generally type exactly the same sequence of
+;;; keys you would have typed without Paredit Mode.[*]
 ;;;
-;;; The behaviour of the commands for deleting and killing can be
-;;; overridden by passing a `C-u' prefix argument: `C-u DEL' will
-;;; delete a character backward, `C-u C-d' will delete a character
-;;; forward, and `C-u C-k' will kill text from the point to the end of
-;;; the line, irrespective of the S-expression structure in the buffer.
-;;; This can be used to fix mistakes in a buffer, but should generally
-;;; be avoided.
+;;; Paredit Mode also binds common editing keys, such as `DEL', `C-d',
+;;; and `C-k', to commands that respect S-expression structures in the
+;;; buffer:
 ;;;
-;;; Paredit performs automatic reindentation as locally as possible, to
-;;; avoid interfering with custom indentation used elsewhere in some
-;;; S-expression.  Only the advanced S-expression manipulation commands
-;;; automatically reindent, and only the forms that were immediately
-;;; operated upon (and their subforms).
+;;;   DEL deletes the previous character, unless it is a delimiter: DEL
+;;;        will move the point backward over a closing delimiter, and
+;;;        will delete a delimiter pair together if between an open and
+;;;        closing delimiter;
+;;;
+;;;   C-d deletes the next character in much the same manner; and
+;;;
+;;;   C-k kills all S-expressions that begin anywhere between the point
+;;;        and the end of the line or the closing delimiter of the
+;;;        enclosing list, whichever is first.
+;;;
+;;; If necessary, you can delete a character, kill a line, &c.,
+;;; irrespective of S-expression structure, by pressing `C-u' before
+;;; these keys, in case a mistake has broken the structure.
+;;;
+;;; Finally, Paredit Mode binds some keys to complex S-expression
+;;; editing operations.  For example, `C-<right>' makes the enclosing
+;;; list slurp up an S-expression to its right (here `|' denotes the
+;;; point):
+;;;
+;;;   (foo (bar | baz) quux)  C-<right>  (foo (bar | baz quux))
+;;;
+;;; Some paredit commands automatically reindent code.  When they do,
+;;; they try to indent as locally as possible, to avoid interfering
+;;; with any indentation you might have manually written.  Only the
+;;; advanced S-expression manipulation commands automatically reindent,
+;;; and only the forms that they immediately operated upon (and their
+;;; subforms).
 ;;;
 ;;; This code is written for clarity, not efficiency.  It frequently
 ;;; walks over S-expressions redundantly.  If you have problems with
-;;; the time it takes to execute some of the commands, let me know, but
-;;; first be sure that what you're doing is reasonable: it is
-;;; preferable to avoid immense S-expressions in code anyway.
+;;; the time it takes to execute some of the commands, let me know.
 
 ;;; This assumes Unix-style LF line endings.
 
