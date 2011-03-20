@@ -210,6 +210,10 @@ Signal an error if no clause matches."
 (defvar paredit-mode-map (make-sparse-keymap)
   "Keymap for the paredit minor mode.")
 
+(defvar paredit-override-check-parens-function
+  (lambda (condition) condition nil)
+  "Function to tell whether unbalanced text should inhibit Paredit Mode.")
+
 ;;;###autoload
 (define-minor-mode paredit-mode
   "Minor mode for pseudo-structurally editing Lisp code.
@@ -220,21 +224,18 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
   fixing imbalanced parentheses instead.
 \\<paredit-mode-map>"
   :lighter " Paredit"
-  ;; If we're enabling paredit-mode, the prefix to this code that
-  ;; DEFINE-MINOR-MODE inserts will have already set PAREDIT-MODE to
-  ;; true.  If this is the case, then first check the parentheses, and
-  ;; if there are any imbalanced ones we must inhibit the activation of
-  ;; paredit mode.  We skip the check, though, if the user supplied a
-  ;; prefix argument interactively.
+  ;; Setting `paredit-mode' to false here aborts enabling Paredit Mode.
   (if (and paredit-mode
            (not current-prefix-arg))
-      (if (not (fboundp 'check-parens))
-          (paredit-warn "`check-parens' is not defined; %s"
-                        "be careful of malformed S-expressions.")
-          (condition-case condition
-              (check-parens)
-            (error (setq paredit-mode nil)
-                   (signal (car condition) (cdr condition)))))))
+      (condition-case condition
+          (check-parens)
+        (error
+         (if (not (funcall paredit-override-check-parens-function condition))
+             (progn (setq paredit-mode nil)
+                    (signal (car condition) (cdr condition))))))))
+
+(defun paredit-override-check-parens-interactively (condition)
+  (y-or-n-p (format "Enable Paredit Mode despite condition %S? " condition)))
 
 (defun enable-paredit-mode ()
   "Turn on pseudo-structural editing of Lisp code."
