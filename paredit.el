@@ -1778,13 +1778,15 @@ With a prefix argument N, encompass all N S-expressions forward."
                   'paredit-up/down)))))
 
 (defun paredit-find-next-string-start (horizontal-direction limit)
-  (let ((next-char (if (< 0 horizontal-direction) 'char-after 'char-before))
-        (pastp (if (< 0 horizontal-direction) '< '>)))
+  (let ((buffer-limit-p (if (< 0 horizontal-direction) 'eobp 'bobp))
+        (next-char (if (< 0 horizontal-direction) 'char-after 'char-before))
+        (pastp (if (< 0 horizontal-direction) '> '<)))
     (paredit-handle-sexp-errors
         (save-excursion
           (catch 'exit
             (while t
-              (if (and limit (funcall pastp (point) limit))
+              (if (or (funcall buffer-limit-p)
+                      (and limit (funcall pastp (point) limit)))
                   (throw 'exit nil))
               (forward-sexp horizontal-direction)
               (save-excursion
