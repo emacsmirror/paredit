@@ -1886,12 +1886,6 @@ The argument is passed on to `yank' or `yank-pop'; see their
          (save-excursion (backward-up-list) (indent-sexp)))
         (t (error "Last command was not a yank or a wrap: %s" last-command))))
 
-;;; Thanks to Marco Baringer for the suggestion of a prefix argument
-;;; for PAREDIT-SPLICE-SEXP.  (I, Taylor R. Campbell, however, still
-;;; implemented it, in case any of you lawyer-folk get confused by the
-;;; remark in the top of the file about explicitly noting code written
-;;; by other people.)
-
 (defun paredit-splice-sexp (&optional argument)
   "Splice the list that the point is on by removing its delimiters.
 With a prefix argument as in `C-u', kill all S-expressions backward in
