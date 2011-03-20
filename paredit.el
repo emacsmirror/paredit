@@ -932,35 +932,22 @@ If not in a string, act as `paredit-doublequote'; if no prefix argument
   "Insert a backslash followed by a character to escape."
   (interactive)
   (insert ?\\ )
-  ;; This funny conditional is necessary because PAREDIT-IN-COMMENT-P
-  ;; assumes that PAREDIT-IN-STRING-P already returned false; otherwise
-  ;; it may give erroneous answers.
+  ;; Can't call `paredit-in-comment-p' unless `paredit-in-string-p'
+  ;; gives false.  Read this as simply (not (paredit-in-comment-p)).
   (if (or (paredit-in-string-p)
           (not (paredit-in-comment-p)))
-      (let ((delp t))
-        (unwind-protect (setq delp
-                              (call-interactively 'paredit-escape))
-          ;; We need this in an UNWIND-PROTECT so that the backlash is
-          ;; left in there *only* if PAREDIT-ESCAPE return NIL normally
-          ;; -- in any other case, such as the user hitting C-g or an
-          ;; error occurring, we must delete the backslash to avoid
-          ;; leaving a dangling escape.  (This control structure is a
-          ;; crock.)
-          (if delp (backward-delete-char 1))))))
+      ;; Read a character to insert after the backslash.  If anything
+      ;; goes wrong -- the user hits delete (entering the rubout
+      ;; `character'), aborts with C-g, or enters non-character input
+      ;; -- then delete the backslash to avoid a dangling escape.
+      (let ((delete-p t))
+        (unwind-protect
+            (let ((char (read-char "Escaping character...")))
+              (if (not (eq char ?\^?))
+                  (progn (insert char) (setq delete-p nil))))
+          (if delete-p
+              (backward-delete-char 1))))))
 
-;;; This auxiliary interactive function returns true if the backslash
-;;; should be deleted and false if not.
-
-(defun paredit-escape (char)
-  ;; I'm too lazy to figure out how to do this without a separate
-  ;; interactive function.
-  (interactive "cEscaping character...")
-  (if (eq char 127)                     ; The backslash was a typo, so
-      t                                 ; the luser wants to delete it.
-    (insert char)                       ; (Is there a better way to
-    nil))                               ; express the rubout char?
-                                        ; ?\^? works, but ugh...)
-
 (defun paredit-newline ()
   "Insert a newline and indent it.
 This is like `newline-and-indent', but it not only indents the line
