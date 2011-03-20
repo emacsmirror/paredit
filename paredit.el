@@ -2079,8 +2079,10 @@ With a prefix argument N, move up N lists before wrapping."
                 (search-forward "\\" nil t))
       (delete-char -1)
       (forward-char))
-    (funcall (condition-case condition (progn (check-parens) 'buffer-string)
-               (error (lambda () nil))))))
+    (paredit-handle-sexp-errors
+        (progn (scan-sexps (point-min) (point-max))
+               (buffer-string))
+      nil)))
 
 ;;;; Slurpage & Barfage
 
@@ -2477,12 +2479,7 @@ If no parse state is supplied, compute one from the beginning of the
       (progn
         (save-restriction
           (narrow-to-region start end)
-          ;; Can't use `check-parens' here -- it signals the wrong kind
-          ;; of errors.
-          (save-excursion
-            (goto-char (point-min))
-            (while (not (eobp))
-              (forward-sexp))))
+          (scan-sexps (point-min) (point-max)))
         t)
     nil))
 
