@@ -2079,9 +2079,8 @@ With a prefix argument N, move up N lists before wrapping."
                 (search-forward "\\" nil t))
       (delete-char -1)
       (forward-char))
-    (condition-case condition
-        (progn (check-parens) (buffer-string))
-      (error nil))))
+    (funcall (condition-case condition (progn (check-parens) 'buffer-string)
+               (error (lambda () nil))))))
 
 ;;;; Slurpage & Barfage
 
