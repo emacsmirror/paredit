@@ -984,11 +984,22 @@ If the point is in a string or a comment, fill the paragraph instead,
   (interactive "P")
   (if (or (paredit-in-string-p)
           (paredit-in-comment-p))
-      (fill-paragraph argument)
-    (save-excursion
-      (end-of-defun)
-      (beginning-of-defun)
-      (indent-sexp))))
+      (lisp-fill-paragraph argument)
+    (let ((column (current-column))
+          (indentation (paredit-current-indentation)))
+      (save-excursion (end-of-defun) (beginning-of-defun) (indent-sexp))
+      ;; Preserve the point's position either in the indentation or in
+      ;; the code: if on code, move with the code; if in indentation,
+      ;; leave it in the indentation, either where it was (if that's
+      ;; still indentation) or at the end of the indentation (if the
+      ;; code moved far enough left).
+      (let ((indentation* (paredit-current-indentation)))
+        (goto-char
+         (+ (point-at-bol)
+            (cond ((not (< column indentation))
+                   (+ column (- indentation* indentation)))
+                  ((<= indentation* column) indentation*)
+                  (t column))))))))
 
 ;;;; Comment Insertion
 
@@ -2479,6 +2490,11 @@ If no parse state is supplied, compute one from the beginning of the
               (forward-sexp))))
         t)
     nil))
+
+(defun paredit-current-indentation ()
+  (save-excursion
+    (back-to-indentation)
+    (current-column)))
 
 ;;;; Initialization
 
