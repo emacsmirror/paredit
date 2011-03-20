@@ -732,15 +732,32 @@ If such a comment exists, delete the comment (including all leading
       (insert open)
       (save-excursion
         ;; Move past the desired region.
-        (cond (n (funcall forward
-                          (save-excursion
-                            (forward-sexp (prefix-numeric-value n))
-                            (point))))
-              (regionp (funcall forward (+ end (if spacep 2 1)))))
+        (cond (n
+               (funcall forward
+                        (paredit-scan-sexps-hack (point)
+                                                 (prefix-numeric-value n))))
+              (regionp
+               (funcall forward (+ end (if spacep 2 1)))))
         (insert close)
         (if (paredit-space-for-delimiter-p t close)
             (insert " "))))))
 
+;++ This needs a better name...
+
+(defun paredit-scan-sexps-hack (point n)
+  (save-excursion
+    (goto-char point)
+    (let ((direction (if (< 0 n) +1 -1))
+          (magnitude (abs n))
+          (count 0))
+      (catch 'exit
+        (while (< count magnitude)
+          (let ((p (scan-sexps (point) direction)))
+            (if (not p) (throw 'exit nil))
+            (goto-char p))
+          (setq count (+ count 1)))))
+    (point)))
+
 (defun paredit-region-safe-for-insert-p ()
   (save-excursion
     (let ((beginning (region-beginning))
