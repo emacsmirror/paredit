@@ -2471,12 +2471,7 @@ If no parse state is supplied, compute one from the beginning of the
 (defun paredit-check-region (start end)
   (save-restriction
     (narrow-to-region start end)
-    (if (fboundp 'check-parens)
-        (check-parens)
-        (save-excursion
-          (goto-char (point-min))
-          (while (not (eobp))
-            (forward-sexp))))))
+    (check-parens)))
 
 (defun paredit-region-ok-p (start end)
   (paredit-handle-sexp-errors
