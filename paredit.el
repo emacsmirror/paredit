@@ -453,7 +453,7 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                  "\"Hello, |world!\"")
                 ("hello-\n|  world"
                  "hello-|world"))
-   ("C-c C-M-l" paredit-recentre-on-sexp)
+   ("C-c C-M-l" paredit-recenter-on-sexp)
    ("M-q"       paredit-reindent-defun)
    ))
        nil)                             ; end of PROGN
@@ -1703,10 +1703,10 @@ A negative argument means move forward but still descend a level."
   (interactive "p")
   (down-list (- (or arg 1))))
 
-;;; Thanks to Marco Baringer for suggesting & writing this function.
+(defalias 'paredit-recentre-on-sexp 'paredit-recenter-on-sexp)
 
-(defun paredit-recentre-on-sexp (&optional n)
-  "Recentre the screen on the S-expression following the point.
+(defun paredit-recenter-on-sexp (&optional n)
+  "Recenter the screen on the S-expression following the point.
 With a prefix argument N, encompass all N S-expressions forward."
   (interactive "P")
   (save-excursion
