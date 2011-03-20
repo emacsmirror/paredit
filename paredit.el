@@ -417,6 +417,9 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                 ("(dynamic-wind in (lambda () |body) out)"
                  "(dynamic-wind in |body out)"
                  "|body"))
+   ("M-?"       paredit-convolute-sexp
+                ("(let ((x 5) (y 3)) (frob |(zwonk)) (wibblethwop))"
+                 "|(frob (let ((x 5) (y 3)) (zwonk) (wibblethwop)))"))
 
    "Barfage & Slurpage"
    (("C-)" "C-<right>")
