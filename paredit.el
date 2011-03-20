@@ -1866,10 +1866,18 @@ By default OPEN and CLOSE are round delimiters."
 (defun paredit-count-sexps-forward ()
   (save-excursion
     (let ((n 0))
-      (paredit-ignore-sexp-errors
-        (while (not (eobp))
-          (forward-sexp)
-          (setq n (+ n 1))))
+      (catch 'exit
+        (paredit-ignore-sexp-errors
+          (while (not (eobp))
+            (let ((start (point)))
+              (forward-sexp)
+              ;; Don't count whitespace at the end of the buffer as
+              ;; another S-expression.
+              (if (and (eobp)
+                       (save-excursion (backward-sexp)
+                                       (or (bobp) (< (point) start))))
+                  (throw 'exit nil)))
+            (setq n (+ n 1)))))
       n)))
 
 (defun paredit-yank-pop (&optional argument)
