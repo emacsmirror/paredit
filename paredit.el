@@ -1679,7 +1679,8 @@ If there are no more S-expressions in this one before the closing
   past the S-expression following the point."
   (paredit-handle-sexp-errors
       (forward-sexp)
-    ;++ Is it necessary to use UP-LIST and not just FORWARD-CHAR?
+    ;; Use `up-list' if outside a string in case there is whitespace
+    ;; between the point and the end of the list.
     (if (paredit-in-string-p) (forward-char) (up-list))))
 
 (defun-saving-mark paredit-backward ()
@@ -1689,6 +1690,8 @@ If there are no more S-expressions in this one before the opening
   move backward past the S-expression preceding the point."
   (paredit-handle-sexp-errors
       (backward-sexp)
+    ;; Use `backward-up-list' if outside a string in case there is
+    ;; whitespace between the point and the beginning of the list.
     (if (paredit-in-string-p) (backward-char) (backward-up-list))))
 
 ;;; Why is this not in lisp.el?
