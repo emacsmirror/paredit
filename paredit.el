@@ -1362,8 +1362,8 @@ With a `C-u' prefix argument, simply delete a character backward,
              (backward-char)
              ;; Must call `paredit-in-string-p' before
              ;; `paredit-in-comment-p'.
-             (and (not (paredit-in-string-p))
-                  (paredit-in-comment-p)))
+             (not (or (paredit-in-string-p)
+                      (paredit-in-comment-p))))
            (not (paredit-region-ok-p (point) (point-at-eol))))
       (paredit-check-region (point) (point-at-eol)))
   (backward-delete-char-untabify +1))
