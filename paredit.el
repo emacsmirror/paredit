@@ -327,10 +327,10 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                  "(foo bar)                               ; |baz")
                 ("(frob grovel)|"
                  "(frob grovel)                           ;|")
-                ("    (foo bar)\n|\n    (baz quux)"
-                 "    (foo bar)\n    ;; |\n    (baz quux)")
-                ("    (foo bar) |(baz quux)"
-                 "    (foo bar)\n    ;; |\n    (baz quux)")
+                ("(zot (foo bar)\n|\n     (baz quux))"
+                 "(zot (foo bar)\n     ;; |\n     (baz quux))")
+                ("(zot (foo bar) |(baz quux))"
+                 "(zot (foo bar)\n     ;; |\n     (baz quux))")
                 ("|(defun hello-world ...)"
                  ";;; |\n(defun hello-world ...)"))
 
