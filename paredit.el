@@ -629,7 +629,8 @@ If in a character literal, do nothing.  This prevents changing what was
                     (paredit-in-comment-p))
                 (insert ,open))
                ((not (paredit-in-char-p))
-                (paredit-insert-pair n ,open ,close 'goto-char))))
+                (paredit-insert-pair n ,open ,close 'goto-char)
+                (save-excursion (backward-up-list) (indent-sexp)))))
        (defun ,(paredit-conc-name "paredit-close-" name) ()
          ,(concat "Move past one closing delimiter and reindent.
 \(Agnostic to the specific closing delimiter.)
