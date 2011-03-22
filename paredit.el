@@ -1045,7 +1045,8 @@ If a list begins on the line after the point but ends on a different
 (defun paredit-semicolon-find-line-break-point ()
   (let ((line-break-point nil)
         (eol (point-at-eol)))
-    (and (save-excursion
+    (and (not (eolp))                   ;Implies (not (eobp)).
+         (save-excursion
            (paredit-handle-sexp-errors
                (progn
                  (while
@@ -1055,7 +1056,10 @@ If a list begins on the line after the point but ends on a different
                        (and (eq eol (point-at-eol))
                             (not (eobp)))))
                  (backward-sexp)
-                 (eq eol (point-at-eol)))
+                 (and (eq eol (point-at-eol))
+                      ;; Don't break the line if the end of the last
+                      ;; S-expression is at the end of the buffer.
+                      (progn (forward-sexp) (not (eobp)))))
              ;; If we hit the end of an expression, but the closing
              ;; delimiter is on another line, don't break the line.
              (save-excursion
