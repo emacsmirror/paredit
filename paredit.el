@@ -338,7 +338,7 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                 ("(let ((n (frobbotz))) |(display (+ n 1)\nport))"
                  ,(concat "(let ((n (frobbotz)))"
                           "\n  |(display (+ n 1)"
-                          "\n            port))")))
+                          "\n           port))")))
 
    "Deleting & Killing"
    (("C-d" ,@paredit-forward-delete-keys)
