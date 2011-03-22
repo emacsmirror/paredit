@@ -218,10 +218,10 @@ Signal an error if no clause matches."
 (define-minor-mode paredit-mode
   "Minor mode for pseudo-structurally editing Lisp code.
 With a prefix argument, enable Paredit Mode even if there are
-  imbalanced parentheses in the buffer.
-Paredit behaves badly if parentheses are imbalanced, so exercise
+  unbalanced parentheses in the buffer.
+Paredit behaves badly if parentheses are unbalanced, so exercise
   caution when forcing Paredit Mode to be enabled, and consider
-  fixing imbalanced parentheses instead.
+  fixing unbalanced parentheses instead.
 \\<paredit-mode-map>"
   :lighter " Paredit"
   ;; Setting `paredit-mode' to false here aborts enabling Paredit Mode.
