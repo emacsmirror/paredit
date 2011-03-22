@@ -2350,9 +2350,9 @@ Both must be lists, strings, or atoms; error if there is a mismatch."
                    (backward-delete-char 1)
                    ;; Heuristic kludge: (foo)(bar) => (foo bar).
                    (if (and (= left-point right-point)
-                            (not (or (eq ?\s (char-syntax (char-before)))
-                                     (eq ?\s (char-syntax (char-after))))))
-                       (insert ?\s))
+                            (not (or (eq ?\  (char-syntax (char-before)))
+                                     (eq ?\  (char-syntax (char-after))))))
+                       (insert ?\  ))
                    (backward-up-list)
                    (indent-sexp))
                   ((and (eq left-syntax  ?\" )
