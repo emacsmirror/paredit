@@ -2308,8 +2308,7 @@ Both must be lists, strings, or atoms; error if there is a mismatch."
                   ((and (eq left-syntax  ?\" )
                         (eq right-syntax ?\" ))
                    ;; Delete any intermediate formatting.
-                   (delete-region (1- left-point)
-                                  (1+ right-point)))
+                   (delete-region (1- left-point) (1+ right-point)))
                   ((and (memq left-syntax  '(?w ?_)) ; Word or symbol
                         (memq right-syntax '(?w ?_)))
                    (delete-region left-point right-point))
