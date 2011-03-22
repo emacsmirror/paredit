@@ -1664,7 +1664,7 @@ With a numeric prefix argument N, do `kill-line' that many times."
 
 (defun paredit-kill-ring-save (beginning end)
   "Save the balanced region, but don't kill it, like `kill-ring-save'.
-If the text of the region is imbalanced, signal an error instead.
+If the text of the region is unbalanced, signal an error instead.
 With a prefix argument, disregard any imbalance."
   (interactive "r")
   (if (not current-prefix-arg)
