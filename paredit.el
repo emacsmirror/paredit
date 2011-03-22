@@ -297,11 +297,15 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                  "(define-key keymap [frob]| 'frobnicate)")
                 ("; [Bar.|"
                  "; [Bar.]|"))
+
    ("\""        paredit-doublequote
                 ("(frob grovel |full lexical)"
-                 "(frob grovel \"|\" full lexical)")
+                 "(frob grovel \"|\" full lexical)"
+                 "(frob grovel \"\"| full lexical)")
                 ("(foo \"bar |baz\" quux)"
-                 "(foo \"bar \\\"|baz\" quux)"))
+                 "(foo \"bar \\\"|baz\" quux)")
+                ("(frob grovel)   ; full |lexical"
+                 "(frob grovel)   ; full \"|lexical"))
    ("M-\""      paredit-meta-doublequote
                 ("(foo \"bar |baz\" quux)"
                  "(foo \"bar baz\"\n     |quux)")
