@@ -413,7 +413,7 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
    (("M-<down>" "ESC <down>")
                 paredit-splice-sexp-killing-forward
                 ("(a (b c| d e) f)"
-                 "(a b c f)"))
+                 "(a b c| f)"))
    ("M-r"       paredit-raise-sexp
                 ("(dynamic-wind in (lambda () |body) out)"
                  "(dynamic-wind in |body out)"
