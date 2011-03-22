@@ -1170,8 +1170,9 @@ This is expected to be called only in `paredit-comment-dwim'; do not
            (insert ";;; "))
           ((or code-after-p (not code-before-p))
            ;; Code comment
-           (if code-before-p (newline))
-           (lisp-indent-line)
+           (if code-before-p
+               (newline-and-indent)
+               (lisp-indent-line))
            (insert ";; ")
            (if code-after-p
                (save-excursion
