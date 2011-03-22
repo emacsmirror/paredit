@@ -757,7 +757,9 @@ If such a comment exists, delete the comment (including all leading
           (count 0))
       (catch 'exit
         (while (< count magnitude)
-          (let ((p (scan-sexps (point) direction)))
+          (let ((p
+                 (paredit-handle-sexp-errors (scan-sexps (point) direction)
+                   nil)))
             (if (not p) (throw 'exit nil))
             (goto-char p))
           (setq count (+ count 1)))))
