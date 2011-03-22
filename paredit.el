@@ -1674,7 +1674,7 @@ With a prefix argument, disregard any imbalance."
 
 (defun paredit-kill-region (beginning end)
   "Kill balanced text between point and mark, like `kill-region'.
-If that text is imbalanced, signal an error instead."
+If that text is unbalanced, signal an error instead."
   (interactive "r")
   (if (and beginning end)
       ;; Check that region begins and ends in a sufficiently similar
