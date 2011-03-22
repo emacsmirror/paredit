@@ -317,7 +317,7 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                 ("|(frob grovel)"
                  ";|(frob grovel)")
                 ("(frob |grovel)"
-                 "(frob ;grovel\n)")
+                 "(frob ;|grovel\n )")
                 ("(frob |grovel (bloit\n               zargh))"
                  "(frob ;|grovel\n (bloit\n  zargh))")
                 ("(frob grovel)          |"
