@@ -1211,10 +1211,7 @@ With a `C-u' prefix argument, simply delete a character forward,
         ((paredit-in-string-p)
          (paredit-forward-delete-in-string))
         ((paredit-in-comment-p)
-         ;++ What to do here?  This could move a partial S-expression
-         ;++ into a comment and thereby invalidate the file's form,
-         ;++ or move random text out of a comment.
-         (delete-char 1))
+         (paredit-forward-delete-in-comment))
         ((paredit-in-char-p)            ; Escape -- delete both chars.
          (backward-delete-char 1)
          (delete-char 1))
@@ -1234,12 +1231,14 @@ With a `C-u' prefix argument, simply delete a character forward,
               (eq (char-before) (matching-paren (char-after))))
          (backward-delete-char 1)       ; Empty list -- delete both
          (delete-char 1))               ;   delimiters.
+        ((eq ?\; (char-after))
+         (paredit-forward-delete-comment-start))
         ;; Just delete a single character, if it's not a closing
         ;; delimiter.  (The character literal case is already handled
         ;; by now.)
         ((not (eq (char-syntax (char-after)) ?\) ))
          (delete-char 1))))
-
+
 (defun paredit-forward-delete-in-string ()
   (let ((start+end (paredit-string-start+end-points)))
     (cond ((not (eq (point) (cdr start+end)))
@@ -1262,6 +1261,28 @@ With a `C-u' prefix argument, simply delete a character forward,
            ;; both quotes.  Otherwise we refuse to delete it.
            (backward-delete-char 1)
            (delete-char 1)))))
+
+(defun paredit-forward-delete-in-comment ()
+  ;; Refuse to delete a comment end if moving the next line into the
+  ;; comment would break structure.
+  (if (eolp)
+      (save-excursion
+        (forward-char)
+        (let ((line-start-state (paredit-current-parse-state)))
+          (if (not (comment-search-forward (point-at-eol) t))
+              (goto-char (point-at-eol)))
+          (let ((line-end-state (paredit-current-parse-state)))
+            (paredit-check-region-state line-start-state line-end-state)))))
+  (delete-char 1))
+
+(defun paredit-forward-delete-comment-start ()
+  ;; Refuse to delete a comment start if the comment contains
+  ;; unbalanced junk.  Kludge: `paredit-check-region' moves the point
+  ;; even if the region is OK.  But if we use `save-excursion', then
+  ;; `check-parens' can't put the point at the bad part.
+  (if (not (paredit-region-ok-p (+ (point) 1) (point-at-eol)))
+      (paredit-check-region (+ (point) 1) (point-at-eol)))
+  (delete-char 1))
 
 (defun paredit-backward-delete (&optional argument)
   "Delete a character backward or move backward over a delimiter.
@@ -1285,7 +1306,7 @@ With a `C-u' prefix argument, simply delete a character backward,
         ((paredit-in-string-p)
          (paredit-backward-delete-in-string))
         ((paredit-in-comment-p)
-         (backward-delete-char 1))
+         (paredit-backward-delete-in-comment))
         ((paredit-in-char-p)            ; Escape -- delete both chars.
          (backward-delete-char 1)
          (delete-char 1))
@@ -1304,11 +1325,13 @@ With a `C-u' prefix argument, simply delete a character backward,
               (eq (char-after) (matching-paren (char-before))))
          (backward-delete-char 1)       ; Empty list -- delete both
          (delete-char 1))               ;   delimiters.
+        ((bolp)
+         (paredit-backward-delete-maybe-comment-end))
         ;; Delete it, unless it's an opening delimiter.  The case of
         ;; character literals is already handled by now.
         ((not (eq (char-syntax (char-before)) ?\( ))
          (backward-delete-char-untabify 1))))
-
+
 (defun paredit-backward-delete-in-string ()
   (let ((start+end (paredit-string-start+end-points)))
     (cond ((not (eq (1- (point)) (car start+end)))
@@ -1331,6 +1354,29 @@ With a `C-u' prefix argument, simply delete a character backward,
            ;; both quotes.  Otherwise we refuse to delete it.
            (backward-delete-char 1)
            (delete-char 1)))))
+
+(defun paredit-backward-delete-in-comment ()
+  ;; Refuse to delete a comment start if the comment contains
+  ;; unbalanced junk.
+  (if (and (save-excursion
+             (backward-char)
+             ;; Must call `paredit-in-string-p' before
+             ;; `paredit-in-comment-p'.
+             (and (not (paredit-in-string-p))
+                  (paredit-in-comment-p)))
+           (not (paredit-region-ok-p (point) (point-at-eol))))
+      (paredit-check-region (point) (point-at-eol)))
+  (backward-delete-char-untabify +1))
+
+(defun paredit-backward-delete-maybe-comment-end ()
+  ;; Refuse to delete a comment end if moving the line into the comment
+  ;; would break structure.
+  (let ((line-start-state (paredit-current-parse-state)))
+    (if (not (comment-search-forward (point-at-eol) t))
+        (goto-char (point-at-eol)))
+    (let ((line-end-state (paredit-current-parse-state)))
+      (paredit-check-region-state line-start-state line-end-state)))
+  (backward-delete-char 1))
 
 ;;;; Killing
 
@@ -2505,13 +2551,14 @@ If no parse state is supplied, compute one from the beginning of the
     (check-parens)))
 
 (defun paredit-region-ok-p (start end)
-  (paredit-handle-sexp-errors
-      (progn
-        (save-restriction
-          (narrow-to-region start end)
-          (scan-sexps (point-min) (point-max)))
-        t)
-    nil))
+  (save-excursion
+    (paredit-handle-sexp-errors
+        (progn
+          (save-restriction
+            (narrow-to-region start end)
+            (scan-sexps (point-min) (point-max)))
+          t)
+      nil)))
 
 (defun paredit-current-indentation ()
   (save-excursion
