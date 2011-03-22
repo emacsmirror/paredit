@@ -291,7 +291,7 @@ Paredit behaves badly if parentheses are imbalanced, so exercise
                 ("(a b |c d)"
                  "(a b [|] c d)")
                 ("(foo \"bar |baz\" quux)"
-                 "(foo \"bar [baz\" quux)"))
+                 "(foo \"bar [|baz\" quux)"))
    ("]"         paredit-close-square
                 ("(define-key keymap [frob|  ] 'frobnicate)"
                  "(define-key keymap [frob]| 'frobnicate)")
