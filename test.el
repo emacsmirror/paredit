@@ -38,6 +38,8 @@ Four arguments: the paredit command, the text of the buffer
       (dolist (after (cdr example))
         (with-temp-buffer
           (scheme-mode)
+          (set (make-local-variable 'indent-tabs-mode) nil)
+          (set (make-local-variable 'comment-column) 40)
           (insert before)
           (goto-char (point-min))
           (search-forward "|")
