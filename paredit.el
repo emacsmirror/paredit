@@ -80,9 +80,8 @@
 ;;; It is often extremely difficult to reproduce problems, especially
 ;;; with commands such as `paredit-kill'.  If you do not supply **ALL**
 ;;; of this information, then it is highly probable that I cannot
-;;; reproduce your problem no matter how hard I try, and the effect of
-;;; submitting a bug without this information is only to waste your
-;;; time and mine.  So, please, include all of the above information.
+;;; reproduce your problem no matter how hard I try.  So, please,
+;;; include all of the above information.
 ;;;
 ;;; [*] If you are using a beta version of paredit, be sure that you
 ;;;     are using the *latest* edition of the beta version, available
