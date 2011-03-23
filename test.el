@@ -25,8 +25,9 @@
 
 (defvar paredit-test-failure-function 'paredit-test-failure-default
   "Function to call when `paredit-test' fails.
-Three arguments: the paredit command, the text of the buffer
-  before, and the text of the buffer after.")
+Four arguments: the paredit command, the text of the buffer
+  before, the text of the buffer after, and the expected text of
+  the buffer after.")
 
 (defun paredit-test-failed (command before after expected)
   (funcall paredit-test-failure-function command before after expected))
