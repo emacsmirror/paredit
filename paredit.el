@@ -1750,7 +1750,7 @@ If that text is unbalanced, signal an error instead."
                  (if end-char-quote "" "not ")
                  phrase)))))
 
-;;;; Cursor and Screen Movement
+;;;; Point Motion
 
 (eval-and-compile
   (defmacro defun-saving-mark (name bvl doc &rest body)
@@ -1792,6 +1792,8 @@ With ARG, do this that many times.
 A negative argument means move forward but still descend a level."
   (interactive "p")
   (down-list (- (or arg 1))))
+
+;;;; Window Positioning
 
 (defalias 'paredit-recentre-on-sexp 'paredit-recenter-on-sexp)
 
@@ -1799,13 +1801,30 @@ A negative argument means move forward but still descend a level."
   "Recenter the screen on the S-expression following the point.
 With a prefix argument N, encompass all N S-expressions forward."
   (interactive "P")
-  (save-excursion
-    (forward-sexp n)
-    (let ((end-point (point)))
-      (backward-sexp n)
-      (let ((start-point (point)))
+  (let* ((p (point))
+         (end-point (progn (forward-sexp n) (point)))
+         (start-point (progn (goto-char end-point) (backward-sexp n) (point))))
+    ;; Point is at beginning of first S-expression.
+    (let ((p-visible nil) (start-visible nil))
+      (save-excursion
         (forward-line (/ (count-lines start-point end-point) 2))
-        (recenter)))))
+        (recenter)
+        (setq p-visible (pos-visible-in-window-p p))
+        (setq start-visible (pos-visible-in-window-p start-point)))
+      (cond ((not start-visible)
+             ;; Implies (not p-visible).  Put the start at the top of
+             ;; the screen.
+             (recenter 0))
+            (p-visible
+             ;; Go back to p if we can.
+             (goto-char p))))))
+
+(defun paredit-recenter-on-defun ()
+  "Recenter the screen on the definition at point."
+  (interactive)
+  (save-excursion
+    (beginning-of-defun)
+    (paredit-recenter-on-sexp)))
 
 (defun paredit-focus-on-defun ()
   "Moves display to the top of the definition at point."
