@@ -1374,11 +1374,13 @@ With a `C-u' prefix argument, simply delete a character backward,
 (defun paredit-backward-delete-maybe-comment-end ()
   ;; Refuse to delete a comment end if moving the line into the comment
   ;; would break structure.
-  (let ((line-start-state (paredit-current-parse-state)))
-    (if (not (comment-search-forward (point-at-eol) t))
-        (goto-char (point-at-eol)))
-    (let ((line-end-state (paredit-current-parse-state)))
-      (paredit-check-region-state line-start-state line-end-state)))
+  (let* ((line-start-state (paredit-current-parse-state))
+         (line-end-state
+          (save-excursion
+            (if (not (comment-search-forward (point-at-eol) t))
+                (goto-char (point-at-eol)))
+            (paredit-current-parse-state))))
+    (paredit-check-region-state line-start-state line-end-state))
   (backward-delete-char 1))
 
 ;;;; Killing
