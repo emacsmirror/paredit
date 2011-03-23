@@ -59,7 +59,7 @@
 ;;; Send questions, bug reports, comments, feature suggestions, &c.,
 ;;; via email to the author's surname at mumble.net.
 ;;;
-;;; Paredit should run in GNU Emacs 21 or later and XEmacs 21.5 or
+;;; Paredit should run in GNU Emacs 21 or later and XEmacs 21.5.28 or
 ;;; later.
 ;;;
 ;;; *** WARNING *** IMPORTANT *** DO NOT SUBMIT BUGS BEFORE READING ***
