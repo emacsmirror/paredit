@@ -20,8 +20,8 @@
 ;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
 
 (defun paredit-test-failure-default (command before after expected)
-  (message "%S failed test: after %S, got %S but expected %S."
-           command before after expected))
+  (error "%S failed test: after %S, got %S but expected %S."
+         command before after expected))
 
 (defvar paredit-test-failure-function 'paredit-test-failure-default
   "Function to call when `paredit-test' fails.
