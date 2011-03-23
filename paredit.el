@@ -111,7 +111,7 @@
 ;;;
 ;;; These key bindings are designed so that when typing new code in
 ;;; Paredit Mode, you can generally type exactly the same sequence of
-;;; keys you would have typed without Paredit Mode.[*]
+;;; keys you would have typed without Paredit Mode.
 ;;;
 ;;; Paredit Mode also binds common editing keys, such as `DEL', `C-d',
 ;;; and `C-k', to commands that respect S-expression structures in the
