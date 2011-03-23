@@ -45,9 +45,7 @@ Four arguments: the paredit command, the text of the buffer
           (funcall command)
           (insert ?\|)
           (if (not (string= after (buffer-string)))
-              (progn
-                (message "Got: %s" (buffer-string))
-                (paredit-test-failed command before (buffer-string) after))))
+              (paredit-test-failed command before (buffer-string) after)))
         (setq before after)))))
 
 (paredit-do-commands (spec keys command examples)
