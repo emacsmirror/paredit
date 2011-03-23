@@ -2459,8 +2459,8 @@ Assumes that `paredit-in-string-p' is false, so that it need not handle
 
 (defun paredit-indent-sexps ()
   "If in a list, indent all following S-expressions in the list."
-  (let ((start (point))
-        (end (paredit-handle-sexp-errors (progn (up-list) (point)) nil)))
+  (let* ((start (point))
+         (end (paredit-handle-sexp-errors (progn (up-list) (point)) nil)))
     (if end
         (indent-region start end))))
 
