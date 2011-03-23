@@ -2031,7 +2031,7 @@ Inside a string, unescape all backslashes, or signal an error if doing
               (setq indent-end (point)))
             (delete-region (point) end) ; ...to delete the open char.
             ;; Reindent only the region we preserved.
-            (indent-region indent-start indent-end))))))
+            (indent-region indent-start indent-end nil))))))
 
 (defun paredit-kill-surrounding-sexps-for-splice (argument)
   (cond ((or (paredit-in-string-p)
@@ -2110,7 +2110,7 @@ If the point is on an S-expression, such as a string or a symbol, not
       (delete-region (point) (scan-sexps (point) 1))
       (let* ((indent-start (point))
              (indent-end (save-excursion (insert sexps) (point))))
-        (indent-region indent-start indent-end)))))
+        (indent-region indent-start indent-end nil)))))
 
 (defun paredit-convolute-sexp (&optional n)
   "Convolute S-expressions.
@@ -2462,13 +2462,13 @@ Assumes that `paredit-in-string-p' is false, so that it need not handle
   (let* ((start (point))
          (end (paredit-handle-sexp-errors (progn (up-list) (point)) nil)))
     (if end
-        (indent-region start end))))
+        (indent-region start end nil))))
 
 (defun paredit-forward-and-indent ()
   "Move forward an S-expression, indenting it with `indent-region'."
   (let ((start (point)))
     (forward-sexp)
-    (indent-region start (point))))
+    (indent-region start (point) nil)))
 
 (defun paredit-skip-whitespace (trailing-p &optional limit)
   "Skip past any whitespace, or until the point LIMIT is reached.
