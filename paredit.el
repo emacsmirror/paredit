@@ -313,9 +313,9 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
                  ,(concat "(foo \"|(bar #\\\\x \\\"baz \\\\"
                           "\\\\ quux\\\")\" zot)")))
    ("\\"        paredit-backslash
-                ("(string #|)\n  ; Escaping character... (x)"
+                ("(string #|)\n  ; Character to escape: x"
                  "(string #\\x|)")
-                ("\"foo|bar\"\n  ; Escaping character... (\")"
+                ("\"foo|bar\"\n  ; Character to escape: \""
                  "\"foo\\\"|bar\""))
    (";"         paredit-semicolon
                 ("|(frob grovel)"
@@ -970,11 +970,14 @@ If not in a string, act as `paredit-doublequote'; if no prefix argument
       ;; -- then delete the backslash to avoid a dangling escape.
       (let ((delete-p t))
         (unwind-protect
-            (let ((char (read-char "Escaping character...")))
+            (let ((char (read-char "Character to escape: ")))
               (if (not (eq char ?\^?))
-                  (progn (insert char) (setq delete-p nil))))
+                  (progn (message "Character to escape: %c" char)
+                         (insert char)
+                         (setq delete-p nil))))
           (if delete-p
-              (backward-delete-char 1))))))
+              (progn (message "Deleting escape.")
+                     (backward-delete-char 1)))))))
 
 (defun paredit-newline ()
   "Insert a newline and indent it.
