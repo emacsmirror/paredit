@@ -188,7 +188,7 @@ Four arguments: the paredit command, the text of the buffer
     (";foo\n|(bar\n baz)" error)
     (";;|foo(" ";|foo(" error)
     ))
-
+
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
   nil)
