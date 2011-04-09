@@ -47,10 +47,10 @@ Four arguments: the paredit command, the text of the buffer
           (if (cond ((eq expected 'error)
                      ;++ Check that there are no more expected states.
                      (condition-case condition
-                         (progn (funcall command) t)
+                         (progn (call-interactively command) t)
                        (error nil)))
                     ((stringp expected)
-                     (funcall command)
+                     (call-interactively command)
                      (insert ?\|)
                      (not (string= expected (buffer-string))))
                     (t (error "Bad test expectation:" expected)))
