@@ -2206,17 +2206,18 @@ If in a string, move the opening double-quote forward by one
   (up-list)                             ; Up to the end of the list to
   (let ((close (char-before)))          ;   save and delete the closing
     (backward-delete-char 1)            ;   delimiter.
-    (catch 'return                      ; Go to the end of the desired
-      (while t                          ;   S-expression, going up a
-        (paredit-handle-sexp-errors     ;   list if it's not in this,
-            (progn (paredit-forward-and-indent)
-                   (throw 'return nil))
-          (up-list)
-          (setq close                   ; adjusting for mixed
-                (prog1 (char-before)    ;   delimiters as necessary,
-                  (backward-delete-char 1)
-                  (insert close))))))
-    (insert close)))                    ; to insert that delimiter.
+    (let ((start (point)))
+      (catch 'return                    ; Go to the end of the desired
+        (while t                        ;   S-expression, going up a
+          (paredit-handle-sexp-errors   ;   list if it's not in this,
+              (progn (forward-sexp) (throw 'return nil))
+            (up-list)
+            (setq close                 ; adjusting for mixed
+                  (prog1 (char-before)  ;   delimiters as necessary,
+                    (backward-delete-char 1)
+                    (insert close))))))
+      (insert close)                    ; to insert that delimiter.
+      (indent-region start (point) nil))))
 
 (defun paredit-forward-slurp-into-string ()
   (goto-char (1+ (cdr (paredit-string-start+end-points))))
@@ -2245,7 +2246,7 @@ Automatically reindent the newly barfed S-expression with respect to
       (cond ((bobp)
              (error "Barfing all subexpressions with no open-paren?"))
             ((paredit-in-comment-p)     ; Don't put the close-paren in
-             (newline-and-indent)))     ;   a comment.
+             (newline)))                ;   a comment.
       (insert close))
     ;; Reindent all of the newly barfed S-expressions.
     (paredit-forward-and-indent)))

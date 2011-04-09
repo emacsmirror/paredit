@@ -183,4 +183,21 @@ Four arguments: the paredit command, the text of the buffer
     ;; (";;|foo(" ";|foo(" error)
     ))
 
+(defun paredit-canary-indent-method (state indent-point normal-indent)
+  (check-parens)
+  nil)
+
+(put 'paredit-canary 'scheme-indent-function 'paredit-canary-indent-method)
+
+;;; Check for regressions the indentation behaviour of forward slurping
+;;; and barfing.
+
+(paredit-test 'paredit-forward-slurp-sexp
+  '(("(paredit-canary|)\n(lose)"
+     "(paredit-canary|\n (lose))")))
+
+(paredit-test 'paredit-forward-barf-sexp
+  '(("(paredit-canary|  ;\n (lose))")
+    ("(paredit-canary|  ;\n)\n(lose)")))
+
 ;++ Killing commands...ugh...
