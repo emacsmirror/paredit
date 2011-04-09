@@ -80,7 +80,6 @@ Four arguments: the paredit command, the text of the buffer
          examples)))))
 
 ;++ Test `paredit-open-...' with the region active.
-;++ Test `paredit-open-...' with prefix arguments.
 
 (paredit-test-bracketed '((paredit-open-round ?\( ?\))
                           (paredit-open-square ?\[ ?\])
@@ -97,6 +96,28 @@ Four arguments: the paredit command, the text of the buffer
     ("(foo \"bar\"| baz)" "(foo \"bar\" (|) baz)")
     ("foo|" "foo (|)")
     ("|foo" "(|) foo")))
+
+(let ((current-prefix-arg 1))
+  (paredit-test-bracketed '((paredit-open-round ?\( ?\))
+                            (paredit-open-square ?\[ ?\])
+                            (paredit-open-curly ?\{ ?\})
+                            ;; (paredit-open-angled ?\< ?\>)
+                            )
+    '(("(foo |bar baz)" "(foo (|bar) baz)")
+      ("(x |;y\n z\n w)"
+       "(x (|                                    ;y\n    z)\n w)"))))
+
+(let ((current-prefix-arg '(4)))
+  (paredit-test-bracketed '((paredit-open-round ?\( ?\))
+                            (paredit-open-square ?\[ ?\])
+                            (paredit-open-curly ?\{ ?\})
+                            ;; (paredit-open-angled ?\< ?\>)
+                            )
+    '(("(foo |bar baz)" "(foo (|bar baz))")
+      ("(x |;y\n z\n w)"
+       "(x (|                                    ;y\n    z\n    w))")
+      ("foo |bar baz" "foo (|bar baz)")
+      ("foo\n|bar\nbaz\n;quux\n" "foo\n(|bar\n baz)\n;quux\n"))))
 
 (paredit-test-bracketed '((paredit-close-round ?\( ?\))
                           (paredit-close-square ?\[ ?\])
