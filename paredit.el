@@ -742,6 +742,12 @@ If such a comment exists, delete the comment (including all leading
                                                  (prefix-numeric-value n))))
               (regionp
                (funcall forward (+ end (if spacep 2 1)))))
+        ;; The string case can happen if we are inserting string
+        ;; delimiters.  The comment case may happen by moving to the
+        ;; end of a buffer that has a comment with no trailing newline.
+        (if (and (not (paredit-in-string-p))
+                 (paredit-in-comment-p))
+            (newline))
         (insert close)
         (if (paredit-space-for-delimiter-p t close)
             (insert " "))))))
