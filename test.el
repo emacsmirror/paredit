@@ -18,7 +18,7 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
-
+
 (defun paredit-test-failure-default (command before after expected)
   (error "%S failed test: after %S, got %S but expected %S."
          command before after expected))
@@ -35,7 +35,7 @@ Four arguments: the paredit command, the text of the buffer
 (defun paredit-test (command examples)
   (dolist (example examples)
     (let ((before (car example)))
-      (dolist (after (cdr example))
+      (dolist (expected (cdr example))
         (with-temp-buffer
           (scheme-mode)
           (set (make-local-variable 'indent-tabs-mode) nil)
@@ -44,11 +44,18 @@ Four arguments: the paredit command, the text of the buffer
           (goto-char (point-min))
           (search-forward "|")
           (backward-delete-char +1)
-          (funcall command)
-          (insert ?\|)
-          (if (not (string= after (buffer-string)))
-              (paredit-test-failed command before (buffer-string) after)))
-        (setq before after)))))
+          (if (cond ((eq expected 'error)
+                     ;++ Check that there are no more expected states.
+                     (condition-case condition
+                         (progn (funcall command) t)
+                       (error nil)))
+                    ((stringp expected)
+                     (funcall command)
+                     (insert ?\|)
+                     (not (string= expected (buffer-string))))
+                    (t (error "Bad test expectation:" expected)))
+              (paredit-test-failed command before (buffer-string) expected)))
+        (setq before expected)))))
 
 (paredit-do-commands (spec keys command examples)
     nil                                 ;string case
@@ -65,8 +72,10 @@ Four arguments: the paredit command, the text of the buffer
         (mapcar
          (lambda (example)
            (mapcar (lambda (step)
-                     (replace-regexp-in-string "(" (string left)
-                       (replace-regexp-in-string ")" (string right) step)))
+                     (if (stringp step)
+                         (replace-regexp-in-string "(" (string left)
+                           (replace-regexp-in-string ")" (string right) step))
+                         step))
                    example))
          examples)))))
 
