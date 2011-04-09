@@ -175,9 +175,9 @@ Four arguments: the paredit command, the text of the buffer
     (";|;(foo)" ";|(foo)")
     ("|;;(foo)" "|;(foo)" "|(foo)")
     (";foo|\n(bar)\n(baz\n quux)" ";foo|(bar)\n(baz\n quux)")
-    ;; (";foo|\n(bar\n baz)" error)
+    (";foo|\n(bar\n baz)" error)
     ("|;;foo(" "|;foo(")
-    ;; ("|;;foo(" "|;foo(" error)
+    ("|;;foo(" "|;foo(" error)
     ))
 
 (paredit-test 'paredit-backward-delete
