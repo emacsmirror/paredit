@@ -108,6 +108,7 @@ Four arguments: the paredit command, the text of the buffer
        "(x (|                                    ;y\n    z)\n w)"))))
 
 (let ((current-prefix-arg '(4)))
+  ;++ Oops -- `C-u (' is like `M-4 (', not like `C-u M-('.
   (paredit-test-bracketed '((paredit-open-round ?\( ?\))
                             (paredit-open-square ?\[ ?\])
                             (paredit-open-curly ?\{ ?\})
@@ -117,7 +118,10 @@ Four arguments: the paredit command, the text of the buffer
       ("(x |;y\n z\n w)"
        "(x (|                                    ;y\n    z\n    w))")
       ("foo |bar baz" "foo (|bar baz)")
-      ("foo\n|bar\nbaz\n;quux\n" "foo\n(|bar\n baz)\n;quux\n"))))
+      ;++ These tests are kinda bunk.  It's not immediately clear to me
+      ;++ which is right: including or excluding the trailing comment.
+      ("foo\n|bar\nbaz\n;quux\n" "foo\n(|bar\n baz)\n;quux\n")
+      ("foo\n|bar\nbaz\n;; quux" "foo\n(|bar\n baz\n ;; quux\n )"))))
 
 (paredit-test-bracketed '((paredit-close-round ?\( ?\))
                           (paredit-close-square ?\[ ?\])
