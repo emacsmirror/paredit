@@ -115,8 +115,7 @@ Four arguments: the paredit command, the text of the buffer
                           ;; (paredit-close-angled ?\< ?\>)
                           )
   '(("(|" "()|")
-    ;++ No way to express expected errors.
-    ;; ("foo|" error)
+    ("foo|" error)
     ("(foo|  ;\n   )" "(foo  ;\n )|")
     ("(foo|  ;\n   bar)" "(foo  ;\n   bar)|")
     ("(foo|  ;\n   bar )" "(foo  ;\n   bar)|")))
