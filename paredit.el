@@ -1701,6 +1701,9 @@ If that text is unbalanced, signal an error instead."
   (kill-region beginning end))
 
 (defun paredit-check-region-state (beginning-state end-state)
+  "Signal an error if the two parse-partial-sexp states differ.
+This guarantees that excising the text between the two states'
+  points from the buffer will leave the buffer balanced."
   (paredit-check-region-state-depth beginning-state end-state)
   (paredit-check-region-state-string beginning-state end-state)
   (paredit-check-region-state-comment beginning-state end-state)
