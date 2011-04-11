@@ -1274,25 +1274,19 @@ With a `C-u' prefix argument, simply delete a character forward,
            (delete-char 1)))))
 
 (defun paredit-forward-delete-in-comment ()
-  ;; Refuse to delete a comment end if moving the next line into the
-  ;; comment would break structure.
+  ;; Point is in a comment, possibly at eol.  Refuse to delete a
+  ;; comment end if moving the next line into the comment would break
+  ;; structure.
   (if (eolp)
-      (save-excursion
-        (forward-char)
-        (let ((line-start-state (paredit-current-parse-state)))
-          (if (not (comment-search-forward (point-at-eol) t))
-              (goto-char (point-at-eol)))
-          (let ((line-end-state (paredit-current-parse-state)))
-            (paredit-check-region-state line-start-state line-end-state)))))
+      (let ((next-line-start (point-at-bol 2))
+            (next-line-end (point-at-eol 2)))
+        (paredit-check-region next-line-start next-line-end)))
   (delete-char 1))
 
 (defun paredit-forward-delete-comment-start ()
-  ;; Refuse to delete a comment start if the comment contains
-  ;; unbalanced junk.  Kludge: `paredit-check-region' moves the point
-  ;; even if the region is OK.  But if we use `save-excursion', then
-  ;; `check-parens' can't put the point at the bad part.
-  (if (not (paredit-region-ok-p (+ (point) 1) (point-at-eol)))
-      (paredit-check-region (+ (point) 1) (point-at-eol)))
+  ;; Point precedes a comment start (not at eol).  Refuse to delete a
+  ;; comment start if the comment contains unbalanced junk.
+  (paredit-check-region (+ (point) 1) (point-at-eol))
   (delete-char 1))
 
 (defun paredit-backward-delete (&optional argument)
@@ -1367,28 +1361,26 @@ With a `C-u' prefix argument, simply delete a character backward,
            (delete-char 1)))))
 
 (defun paredit-backward-delete-in-comment ()
+  ;; Point is in a comment, possibly just after the comment start.
   ;; Refuse to delete a comment start if the comment contains
   ;; unbalanced junk.
-  (if (and (save-excursion
-             (backward-char)
-             ;; Must call `paredit-in-string-p' before
-             ;; `paredit-in-comment-p'.
-             (not (or (paredit-in-string-p)
-                      (paredit-in-comment-p))))
-           (not (paredit-region-ok-p (point) (point-at-eol))))
+  (if (save-excursion
+        (backward-char)
+        ;; Must call `paredit-in-string-p' before
+        ;; `paredit-in-comment-p'.
+        (not (or (paredit-in-string-p) (paredit-in-comment-p))))
       (paredit-check-region (point) (point-at-eol)))
   (backward-delete-char-untabify +1))
 
 (defun paredit-backward-delete-maybe-comment-end ()
-  ;; Refuse to delete a comment end if moving the line into the comment
-  ;; would break structure.
-  (let* ((line-start-state (paredit-current-parse-state))
-         (line-end-state
-          (save-excursion
-            (if (not (comment-search-forward (point-at-eol) t))
-                (goto-char (point-at-eol)))
-            (paredit-current-parse-state))))
-    (paredit-check-region-state line-start-state line-end-state))
+  ;; Point is at bol, possibly just after a comment end (i.e., the
+  ;; previous line may have had a line comment).  Refuse to delete a
+  ;; comment end if moving the current line into the previous line's
+  ;; comment would break structure.
+  (if (save-excursion
+        (backward-char)
+        (and (not (paredit-in-string-p)) (paredit-in-comment-p)))
+      (paredit-check-region (point-at-eol) (point-at-bol)))
   (backward-delete-char 1))
 
 ;;;; Killing
