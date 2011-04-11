@@ -1689,7 +1689,7 @@ With a prefix argument, skip the balance check."
   (kill-region start end))
 
 (defun paredit-check-region-for-delete (start end)
-  "Signal an error deleting text between `start' and `end' is unsafe."
+  "Signal an error deleting text between START and END is unsafe."
   (save-excursion
     (goto-char start)
     (let* ((start-state (paredit-current-parse-state))
