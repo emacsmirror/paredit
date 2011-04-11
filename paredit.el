@@ -2582,11 +2582,19 @@ If no parse state is supplied, compute one from the beginning of the
       (error "Invalid context for command `%s'." command)))
 
 (defun paredit-check-region (start end)
-  (save-restriction
-    (narrow-to-region start end)
-    (check-parens)))
+  "Signal an error if text between `start' and `end' is unbalanced."
+  ;; `narrow-to-region' will move the point, so avoid calling it if we
+  ;; don't need to.  We don't want to use `save-excursion' because we
+  ;; want the point to move if `check-parens' reports an error.
+  (if (not (paredit-region-ok-p start end))
+      (save-restriction
+        (narrow-to-region start end)
+        (check-parens))))
 
 (defun paredit-region-ok-p (start end)
+  "Return true iff the region between `start' and `end' is balanced.
+This is independent of context -- it doesn't check what state the
+  text at `start' is in."
   (save-excursion
     (paredit-handle-sexp-errors
         (progn
