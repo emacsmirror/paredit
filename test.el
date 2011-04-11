@@ -193,7 +193,7 @@ Four arguments: the paredit command, the text of the buffer
     ;; `comment-search-forward' to wind up inside a character or a
     ;; string?
     ))
-
+
 (paredit-test 'paredit-forward-delete
   '(("f|oo" "f|o")
     (";f|(oo" ";f|oo")
@@ -202,7 +202,10 @@ Four arguments: the paredit command, the text of the buffer
     (";foo|\n(bar)\n(baz\n quux)" ";foo|(bar)\n(baz\n quux)")
     (";foo|\n(bar\n baz)" error)
     ("|;;foo(" "|;foo(" error)
-    ))
+    (";foo|\n(bar);baz\n" ";foo|(bar);baz\n")
+    (";foo|\n(bar);baz" ";foo|(bar);baz")
+    (";foo|\n(bar ;baz\n quux)\n" error)
+    (";foo|\n(bar ;baz\n quux)" error)))
 
 (paredit-test 'paredit-backward-delete
   '(("fo|o" "f|o")
@@ -212,7 +215,16 @@ Four arguments: the paredit command, the text of the buffer
     (";foo\n|(bar)\n(baz\n quux)" ";foo|(bar)\n(baz\n quux)")
     (";foo\n|(bar\n baz)" error)
     (";;|foo(" ";|foo(" error)
-    ))
+    (";foo\n|(bar);baz\n" ";foo|(bar);baz\n")
+    (";foo\n|(bar);baz" ";foo|(bar);baz")
+    (";foo\n|(bar ;baz\n quux)\n" error)
+    (";foo\n|(bar ;baz\n quux)" error)))
+
+;++ Need lots more tests for this, the hairiest paredit command...
+
+(paredit-test 'paredit-kill
+  '((";foo|\n(bar)\n" ";foo|(bar)\n")
+    (";foo|\n(bar\n baz)\n" error)))
 
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
@@ -230,5 +242,3 @@ Four arguments: the paredit command, the text of the buffer
 (paredit-test 'paredit-forward-barf-sexp
   '(("(paredit-canary|  ;\n (lose))")
     ("(paredit-canary|  ;\n)\n(lose)")))
-
-;++ Killing commands...ugh...
