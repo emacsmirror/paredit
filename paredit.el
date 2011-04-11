@@ -966,25 +966,27 @@ If not in a string, act as `paredit-doublequote'; if no prefix argument
 (defun paredit-backslash ()
   "Insert a backslash followed by a character to escape."
   (interactive)
+  (cond ((paredit-in-string-p) (paredit-backslash-interactive))
+        ((paredit-in-comment-p) (insert ?\\))
+        ((paredit-in-char-p) (forward-char) (paredit-backslash-interactive))
+        (t (paredit-backslash-interactive))))
+
+(defun paredit-backslash-interactive ()
   (insert ?\\ )
-  ;; Can't call `paredit-in-comment-p' unless `paredit-in-string-p'
-  ;; gives false.  Read this as simply (not (paredit-in-comment-p)).
-  (if (or (paredit-in-string-p)
-          (not (paredit-in-comment-p)))
-      ;; Read a character to insert after the backslash.  If anything
-      ;; goes wrong -- the user hits delete (entering the rubout
-      ;; `character'), aborts with C-g, or enters non-character input
-      ;; -- then delete the backslash to avoid a dangling escape.
-      (let ((delete-p t))
-        (unwind-protect
-            (let ((char (read-char "Character to escape: ")))
-              (if (not (eq char ?\^?))
-                  (progn (message "Character to escape: %c" char)
-                         (insert char)
-                         (setq delete-p nil))))
-          (if delete-p
-              (progn (message "Deleting escape.")
-                     (backward-delete-char 1)))))))
+  ;; Read a character to insert after the backslash.  If anything
+  ;; goes wrong -- the user hits delete (entering the rubout
+  ;; `character'), aborts with C-g, or enters non-character input
+  ;; -- then delete the backslash to avoid a dangling escape.
+  (let ((delete-p t))
+    (unwind-protect
+        (let ((char (read-char "Character to escape: ")))
+          (if (not (eq char ?\^?))
+              (progn (message "Character to escape: %c" char)
+                     (insert char)
+                     (setq delete-p nil))))
+      (if delete-p
+          (progn (message "Deleting escape.")
+                 (backward-delete-char 1))))))
 
 (defun paredit-newline ()
   "Insert a newline and indent it.
