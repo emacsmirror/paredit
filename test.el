@@ -240,12 +240,6 @@ Four arguments: the paredit command, the text of the buffer
     (";foo\n|(bar ;baz\n quux)\n" error)
     (";foo\n|(bar ;baz\n quux)" error)))
 
-;++ Need lots more tests for this, the hairiest paredit command...
-
-(paredit-test 'paredit-kill
-  '((";foo|\n(bar)\n" ";foo|(bar)\n")
-    (";foo|\n(bar\n baz)\n" error)))
-
 (dolist (command '(paredit-delete-region paredit-kill-region))
   ;++ Need to check whether `paredit-kill-region' updates the kill ring
   ;++ correctly.
@@ -264,6 +258,53 @@ Four arguments: the paredit command, the text of the buffer
       ("(foo bar| baz    ;quux (_)\n     zot)" error)
       ("(foo bar| baz    ;quux ()_\n     zot)"
        "(foo bar|\n     zot)"))))
+
+;;; The hairiest paredit command: paredit-kill.
+
+;++ Need to check whether `paredit-kill' updates the kill ring.
+
+(paredit-test 'paredit-kill
+  '(("| \n " "|\n " "| " "|" error)
+    ("(| )" "(|)" "(|)")
+    ("(     |        )" "(     |)" "(     |)")
+    ("|(\n)" "|" error)
+    ("|(\n)\n" "|\n" "|" error)
+    ("|\"\n\"" "|" error)
+    ("|\"\n\"\n" "|\n" "|" error)
+    ("(a |(b) (c)\n   (d) (e))"
+     "(a |\n   (d) (e))"
+     "(a |   (d) (e))"
+     "(a |)"
+     "(a |)")
+    ("(a (|(b) (c)\n    (d) (e)) (f))"
+     "(a (|\n    (d) (e)) (f))"
+     "(a (|    (d) (e)) (f))"
+     "(a (|) (f))"
+     "(a (|) (f))")
+    ("(a |((b) (c)\n    (d) (e)) (f))"
+     "(a | (f))"
+     "(a |)"
+     "(a |)")
+    ("(a |\"(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
+     "(a | (f))"
+     "(a |)"
+     "(a |)")
+    ("x|(\n)(z)" "x|(z)" "x|" error)
+    ("x|\"\n\"(z)" "x|(z)" "x|" error)
+    ("(foo ;; |bar\n baz)"
+     "(foo ;; |\n baz)"
+     error)
+    ("(foo |;; bar\n baz)"
+     "(foo |\n baz)"
+     "(foo | baz)"
+     "(foo |)"
+     "(foo |)")
+    ("|(foo bar) ;baz" "|" error)
+    ("|(foo bar) ;baz\n" "|\n" "|" error)
+    ("|(foo\n bar) ;baz" "| ;baz" "|" error)
+    ("|(foo\n bar) ;baz\n" "| ;baz\n" "|\n" "|" error)
+    (";foo|\n(bar)\n" ";foo|(bar)\n" ";foo|\n" ";foo|" error)
+    (";foo|\n(bar\n baz)\n" error)))
 
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
