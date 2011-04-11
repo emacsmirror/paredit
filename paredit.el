@@ -1722,10 +1722,10 @@ With a prefix argument, skip the balance check."
                  ;; comment state may be a number, not t or nil at all,
                  ;; for nestable comments, which are not handled by
                  ;; this heuristic (or any of paredit, really).)
-                 (and (or (eq start-comment-state nil)
-                          (eq end-comment-state t))
-                      (or (eq start-comment-state t)
-                          (eq end-comment-state nil))
+                 (and (or (and (eq start-comment-state nil)
+                               (eq end-comment-state t))
+                          (and (eq start-comment-state t)
+                               (eq end-comment-state nil)))
                       (save-excursion
                         (goto-char end)
                         (paredit-region-ok-p (point) (point-at-eol))))))
