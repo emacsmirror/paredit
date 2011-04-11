@@ -225,7 +225,11 @@ Four arguments: the paredit command, the text of the buffer
     (";foo|\n(bar);baz\n" ";foo|(bar);baz\n")
     (";foo|\n(bar);baz" ";foo|(bar);baz")
     (";foo|\n(bar ;baz\n quux)\n" error)
-    (";foo|\n(bar ;baz\n quux)" error)))
+    (";foo|\n(bar ;baz\n quux)" error)
+    ("|\\\\\\\\" "|\\\\" "|" error)
+    ("\\\\|\\\\" "\\\\|" error)
+    ("(|\\\\\\\\)" "(|\\\\)" "(|)" "|" error)
+    ("(\\\\|\\\\)" "(\\\\|)" "(\\\\|)")))
 
 (paredit-test 'paredit-backward-delete
   '(("fo|o" "f|o")
@@ -238,7 +242,11 @@ Four arguments: the paredit command, the text of the buffer
     (";foo\n|(bar);baz\n" ";foo|(bar);baz\n")
     (";foo\n|(bar);baz" ";foo|(bar);baz")
     (";foo\n|(bar ;baz\n quux)\n" error)
-    (";foo\n|(bar ;baz\n quux)" error)))
+    (";foo\n|(bar ;baz\n quux)" error)
+    ("\\\\\\\\|" "\\\\|" "|" error)
+    ("\\\\|\\\\" "|\\\\" error)
+    ("(\\\\\\\\|)" "(\\\\|)" "(|)" "|" error)
+    ("(\\\\|\\\\)" "(|\\\\)" "(|\\\\)")))
 
 (dolist (command '(paredit-delete-region paredit-kill-region))
   ;++ Need to check whether `paredit-kill-region' updates the kill ring
