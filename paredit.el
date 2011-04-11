@@ -2458,18 +2458,11 @@ This assumes that `paredit-in-string-p' has already returned true."
         (backward-char)))
     oddp))
 
-(defun paredit-in-char-p (&optional argument)
-  "True if the point is immediately after a character literal.
-A preceding escape character, not preceded by another escape character,
-  is considered a character literal prefix.  (This works for elisp,
-  Common Lisp, and Scheme.)
-Assumes that `paredit-in-string-p' is false, so that it need not handle
-  long sequences of preceding backslashes in string escapes.  (This
-  assumes some other leading character token -- ? in elisp, # in Scheme
-  and Common Lisp.)"
-  (let ((argument (or argument (point))))
-    (and (eq (char-before argument) ?\\ )
-         (not (eq (char-before (1- argument)) ?\\ )))))
+(defun paredit-in-char-p (&optional position)
+  "True if point is on a character escape outside a string."
+  (save-excursion
+    (goto-char (or position (point)))
+    (paredit-in-string-escape-p)))
 
 (defun paredit-indent-sexps ()
   "If in a list, indent all following S-expressions in the list."
