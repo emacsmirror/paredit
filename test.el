@@ -158,6 +158,21 @@ Four arguments: the paredit command, the text of the buffer
   '(("(foo #\\|(  )" "(foo #\\()\n|")
     ("(foo|\n )   ;bar" "(foo)   ;bar\n|")
     ("((foo|\n)    (bar))" "((foo)\n |(bar))")))
+
+(paredit-test-bracketed '((paredit-wrap-round ?\( ?\))
+                          (paredit-wrap-square ?\[ ?\])
+                          (paredit-wrap-curly ?\{ ?\})
+                          ;; (paredit-wrap-angled ?\< ?\>)
+                          )
+  '(("|foo" "(|foo)")
+    ("|foo bar" "(|foo) bar")
+    ("|foo bar baz" "(|foo) bar baz")
+    ("|foo bar_" "(|foo bar)")
+    ("|foo bar_ baz" "(|foo bar) baz")))
+
+(let ((current-prefix-arg '(4)))
+  (paredit-test 'paredit-wrap-sexp
+    '(("(foo |bar baz)" "(foo (|bar baz))"))))
 
 (paredit-test 'paredit-newline
   '(("\"foo|bar\"" "\"foo\n|bar\"")
@@ -198,17 +213,6 @@ Four arguments: the paredit command, the text of the buffer
     ;; `comment-search-forward' to wind up inside a character or a
     ;; string?
     ))
-
-(paredit-test 'paredit-wrap-sexp
-  '(("|foo" "(|foo)")
-    ("|foo bar" "(|foo) bar")
-    ("|foo bar baz" "(|foo) bar baz")
-    ("|foo bar_" "(|foo bar)")
-    ("|foo bar_ baz" "(|foo bar) baz")))
-
-(let ((current-prefix-arg '(4)))
-  (paredit-test 'paredit-wrap-sexp
-    '(("(foo |bar baz)" "(foo (|bar baz))"))))
 
 (paredit-test 'paredit-forward-delete
   '(("f|oo" "f|o")
