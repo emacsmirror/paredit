@@ -676,30 +676,32 @@ Used by `paredit-yank-pop'; for internal paredit use only.")
   'paredit-close-square-and-newline)
 
 (defun paredit-move-past-close (close)
-  (cond ((or (paredit-in-string-p)
-             (paredit-in-comment-p))
-         (insert close))
-        ((not (paredit-in-char-p))
-         (paredit-move-past-close-and-reindent close)
-         (paredit-blink-paren-match nil))))
+  (paredit-move-past-close-and close
+    (lambda ()
+      (paredit-blink-paren-match nil))))
 
 (defun paredit-move-past-close-and-newline (close)
+  (paredit-move-past-close-and close
+    (lambda ()
+      (let ((comment.point (paredit-find-comment-on-line)))
+        (newline)
+        (if comment.point
+            (save-excursion
+              (forward-line -1)
+              (end-of-line)
+              (indent-to (cdr comment.point))
+              (insert (car comment.point)))))
+      (lisp-indent-line)
+      (paredit-ignore-sexp-errors (indent-sexp))
+      (paredit-blink-paren-match t))))
+
+(defun paredit-move-past-close-and (close if-moved)
   (if (or (paredit-in-string-p)
           (paredit-in-comment-p))
       (insert close)
     (if (paredit-in-char-p) (forward-char))
     (paredit-move-past-close-and-reindent close)
-    (let ((comment.point (paredit-find-comment-on-line)))
-      (newline)
-      (if comment.point
-          (save-excursion
-            (forward-line -1)
-            (end-of-line)
-            (indent-to (cdr comment.point))
-            (insert (car comment.point)))))
-    (lisp-indent-line)
-    (paredit-ignore-sexp-errors (indent-sexp))
-    (paredit-blink-paren-match t)))
+    (funcall if-moved)))
 
 (defun paredit-find-comment-on-line ()
   "Find a margin comment on the current line.
