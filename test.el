@@ -158,7 +158,7 @@ Four arguments: the paredit command, the text of the buffer
   '(("(foo #\\|(  )" "(foo #\\()\n|")
     ("(foo|\n )   ;bar" "(foo)   ;bar\n|")
     ("((foo|\n)    (bar))" "((foo)\n |(bar))")))
-
+
 (paredit-test-bracketed '((paredit-wrap-round ?\( ?\))
                           (paredit-wrap-square ?\[ ?\])
                           (paredit-wrap-curly ?\{ ?\})
@@ -166,9 +166,25 @@ Four arguments: the paredit command, the text of the buffer
                           )
   '(("|foo" "(|foo)")
     ("|foo bar" "(|foo) bar")
-    ("|foo bar baz" "(|foo) bar baz")
-    ("|foo bar_" "(|foo bar)")
-    ("|foo bar_ baz" "(|foo bar) baz")))
+    ("|foo bar baz" "(|foo) bar baz")))
+
+(let ((transient-mark-mode t))
+  (paredit-test-bracketed '((paredit-wrap-round ?\( ?\))
+                            (paredit-wrap-square ?\[ ?\])
+                            (paredit-wrap-curly ?\{ ?\})
+                            ;; (paredit-wrap-angled ?\< ?\>)
+                            )
+    '(("|foo bar_" "(|foo bar)")
+      ("|foo bar_ baz" "(|foo bar) baz"))))
+
+(let ((transient-mark-mode nil))
+  (paredit-test-bracketed '((paredit-wrap-round ?\( ?\))
+                            (paredit-wrap-square ?\[ ?\])
+                            (paredit-wrap-curly ?\{ ?\})
+                            ;; (paredit-wrap-angled ?\< ?\>)
+                            )
+    '(("|foo bar_" "(|foo) bar")
+      ("|foo bar_ baz" "(|foo) bar baz"))))
 
 (let ((current-prefix-arg '(4)))
   (paredit-test 'paredit-wrap-sexp
