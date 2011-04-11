@@ -239,6 +239,19 @@ Four arguments: the paredit command, the text of the buffer
 (paredit-test 'paredit-kill
   '((";foo|\n(bar)\n" ";foo|(bar)\n")
     (";foo|\n(bar\n baz)\n" error)))
+
+(dolist (command '(paredit-delete-region paredit-kill-region))
+  ;++ Need to check whether `paredit-kill-region' updates the kill ring
+  ;++ correctly.
+  (paredit-test command
+    '(("|foo" error)
+      ("|foo_" "|")
+      ("|(foo)_" "|")
+      (";;; f|oo (bar ;_baz\n(zot)\n" ";;; f|baz\n(zot)\n")
+      ("(foo |bar_ baz)\n" "(foo | baz)\n")
+      ("(foo |(bar \"baz\" ; quux\n          zot)\n     _mumble)"
+       "(foo |mumble)")
+      ("(foo (bar |baz) (quux _zot) mumble)" "(foo (bar |zot) mumble)"))))
 
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
