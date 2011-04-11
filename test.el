@@ -196,6 +196,17 @@ Four arguments: the paredit command, the text of the buffer
     ;; `comment-search-forward' to wind up inside a character or a
     ;; string?
     ))
+
+(paredit-test 'paredit-wrap-sexp
+  '(("|foo" "(|foo)")
+    ("|foo bar" "(|foo) bar")
+    ("|foo bar baz" "(|foo) bar baz")
+    ("|foo bar_" "(|foo bar)")
+    ("|foo bar_ baz" "(|foo bar) baz")))
+
+(let ((current-prefix-arg '(4)))
+  (paredit-test 'paredit-wrap-sexp
+    '(("(foo |bar baz)" "(foo (|bar baz))"))))
 
 (paredit-test 'paredit-forward-delete
   '(("f|oo" "f|o")
