@@ -251,7 +251,13 @@ Four arguments: the paredit command, the text of the buffer
       ("(foo |bar_ baz)\n" "(foo | baz)\n")
       ("(foo |(bar \"baz\" ; quux\n          zot)\n     _mumble)"
        "(foo |mumble)")
-      ("(foo (bar |baz) (quux _zot) mumble)" "(foo (bar |zot) mumble)"))))
+      ("(foo (bar |baz) (quux _zot) mumble)" "(foo (bar |zot) mumble)")
+      ("(foo bar    ;baz| quux\n     zot_)" error)
+      ("(foo bar    ;baz| quux\n     _zot\n     mumble)"
+       "(foo bar    ;baz|zot\n     mumble)")
+      ("(foo bar| baz    ;quux (_)\n     zot)" error)
+      ("(foo bar| baz    ;quux ()_\n     zot)"
+       "(foo bar|\n     zot)"))))
 
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
