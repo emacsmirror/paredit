@@ -206,7 +206,7 @@ Four arguments: the paredit command, the text of the buffer
      "(define (square x)\n  (* x x))|")
     ("(define (square x)\n     (* x x))|\n(frob\n    wotz)"
      "(define (square x)\n  (* x x))|\n(frob\n    wotz)")
-    ("(define (square x)\n     (* x x))\n|(frob\n wotz)"
+    ("(define (square x)\n     (* x x))\n|(frob\n    wotz)"
      "(define (square x)\n     (* x x))\n|(frob\n wotz)")
     ("(define (square x)\n |  (* x x))"
      "(define (square x)\n | (* x x))")
