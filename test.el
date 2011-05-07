@@ -54,7 +54,7 @@ Four arguments: the paredit command, the text of the buffer
                      (call-interactively command)
                      (insert ?\|)
                      (not (string= expected (buffer-string))))
-                    (t (error "Bad test expectation:" expected)))
+                    (t (error "Bad test expectation: %S" expected)))
               (paredit-test-failed command before (buffer-string) expected)))
         (setq before expected)))))
 
