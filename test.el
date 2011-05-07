@@ -346,3 +346,6 @@ Four arguments: the paredit command, the text of the buffer
 (paredit-test 'paredit-forward-barf-sexp
   '(("(paredit-canary|  ;\n (lose))")
     ("(paredit-canary|  ;\n)\n(lose)")))
+
+(paredit-test 'paredit-convolute-sexp
+  '(("(let ((x 5) (y 3)) |(frob (zwonk)) (wibblethwop))" error)))
