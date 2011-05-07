@@ -2133,6 +2133,8 @@ Wrap the enclosing list in a new list prefixed by the saved text.
 With a prefix argument N, move up N lists before wrapping."
   (interactive "p")
   (paredit-lose-if-not-in-sexp 'paredit-convolute-sexp)
+  ;; Make sure we can move up before destroying anything.
+  (save-excursion (backward-up-list) (backward-up-list))
   (let (open close)                     ;++ Is this a good idea?
     (let ((prefix
            (let ((end (point)))
