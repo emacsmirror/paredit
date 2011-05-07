@@ -292,7 +292,13 @@ Four arguments: the paredit command, the text of the buffer
 ;++ Need to check whether `paredit-kill' updates the kill ring.
 
 (paredit-test 'paredit-kill
-  '(("| \n " "|\n " "| " "|" error)
+  '(("| \n "
+     ;; This ought to be an intermediate step, but evidently it is only
+     ;; in recent versions of GNU Emacs with `show-trailing-whitespace'
+     ;; set to thanks to some brain damage in `kill-line'.
+     ;;
+     ;; "|\n "
+     "| " "|" error)
     ("(| )" "(|)" "(|)")
     ("(     |        )" "(     |)" "(     |)")
     ("|(\n)" "|" error)
