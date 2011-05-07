@@ -33,6 +33,7 @@ Four arguments: the paredit command, the text of the buffer
   (funcall paredit-test-failure-function command before after expected))
 
 (defun paredit-test (command examples)
+  (message "Testing %S..." command)
   (dolist (example examples)
     (let ((before (car example)))
       (dolist (expected (cdr example))
