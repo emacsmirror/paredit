@@ -37,9 +37,7 @@ Four arguments: the paredit command, the text of the buffer
     (let ((before (car example)))
       (dolist (expected (cdr example))
         (with-temp-buffer
-          (scheme-mode)
-          (set (make-local-variable 'indent-tabs-mode) nil)
-          (set (make-local-variable 'comment-column) 40)
+          (paredit-test-buffer-setup)
           (insert before)
           (goto-char (point-min))
           (if (search-forward "_" nil t)
@@ -59,6 +57,12 @@ Four arguments: the paredit command, the text of the buffer
                     (t (error "Bad test expectation:" expected)))
               (paredit-test-failed command before (buffer-string) expected)))
         (setq before expected)))))
+
+(defun paredit-test-buffer-setup ()
+  (scheme-mode)
+  (set (make-local-variable 'indent-tabs-mode) nil)
+  (set (make-local-variable 'comment-column) 40)
+  (set (make-local-variable 'show-trailing-whitespace) nil))
 
 (paredit-do-commands (spec keys command examples)
     nil                                 ;string case
