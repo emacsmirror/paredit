@@ -423,7 +423,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
                  "|body"))
    ("M-?"       paredit-convolute-sexp
                 ("(let ((x 5) (y 3)) (frob |(zwonk)) (wibblethwop))"
-                 "|(frob (let ((x 5) (y 3)) (zwonk) (wibblethwop)))"))
+                 "(frob |(let ((x 5) (y 3)) (zwonk) (wibblethwop)))"))
 
    "Barfage & Slurpage"
    (("C-)" "C-<right>")
@@ -2124,6 +2124,9 @@ If the point is on an S-expression, such as a string or a symbol, not
       (let* ((indent-start (point))
              (indent-end (save-excursion (insert sexps) (point))))
         (indent-region indent-start indent-end nil)))))
+
+;;; The effects of convolution on the surrounding whitespace are pretty
+;;; random.  If you have better suggestions, please let me know.
 
 (defun paredit-convolute-sexp (&optional n)
   "Convolute S-expressions.
@@ -2134,7 +2137,7 @@ With a prefix argument N, move up N lists before wrapping."
   (interactive "p")
   (paredit-lose-if-not-in-sexp 'paredit-convolute-sexp)
   ;; Make sure we can move up before destroying anything.
-  (save-excursion (backward-up-list) (backward-up-list))
+  (save-excursion (backward-up-list n) (backward-up-list))
   (let (open close)                     ;++ Is this a good idea?
     (let ((prefix
            (let ((end (point)))
@@ -2146,12 +2149,17 @@ With a prefix argument N, move up N lists before wrapping."
                                (setq close (char-before))
                                (backward-delete-char 1))
                (setq open (char-after))
-               (delete-region (point) end)))))
+               (delete-region (point) end)
+               ;; I'm not sure this makes sense...
+               (if (not (eolp)) (just-one-space))))))
       (backward-up-list n)
       (paredit-insert-pair 1 open close 'goto-char)
       (insert prefix)
-      (backward-up-list)
-      (paredit-ignore-sexp-errors (indent-sexp)))))
+      ;; I'm not sure this makes sense either...
+      (if (not (eolp)) (just-one-space))
+      (save-excursion
+        (backward-up-list)
+        (paredit-ignore-sexp-errors (indent-sexp))))))
 
 (defun paredit-splice-string (argument)
   (let ((original-point (point))

@@ -359,4 +359,12 @@ Four arguments: the paredit command, the text of the buffer
     ("(paredit-canary|  ;\n)\n(lose)")))
 
 (paredit-test 'paredit-convolute-sexp
-  '(("(let ((x 5) (y 3)) |(frob (zwonk)) (wibblethwop))" error)))
+  '(("(let ((x 5) (y 3)) |(frob (zwonk)) (wibblethwop))" error)
+    ("(let ((x 0)) (progn| x))" "(progn |(let ((x 0)) x))")
+    ;; Should the space be left inside the LET?  In both cases?
+    ("(let ((x 0)) (progn| ))" "(progn |(let ((x 0)) ))")
+    ("(let ((x 0)) (progn|))" "(progn |(let ((x 0)) ))")
+    ;; One space should definitely be left between A and B here.
+    ("(let ((x 0)) a (progn|) b)" "(progn |(let ((x 0)) a b))")
+    ("(let ((x 0)) a (progn| ) b)" "(progn |(let ((x 0)) a b))")
+    ("(let ((x 0)) a (progn |) b)" "(progn |(let ((x 0)) a b))")))
