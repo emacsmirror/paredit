@@ -292,54 +292,338 @@ Four arguments: the paredit command, the text of the buffer
 
 ;++ Need to check whether `paredit-kill' updates the kill ring.
 
-(paredit-test 'paredit-kill
-  '(("| \n "
+(paredit-test (defun paredit-test-kill ()
+                (interactive)
+                ;; Horrible kludge.  Do it once, and then yank to make
+                ;; sure we get back what we expect.  Then do it again,
+                ;; to get the effects on the buffer the automatic test
+                ;; framework will check.
+                (save-excursion
+                  (let ((kill-ring nil))
+                    (let ((text (buffer-string)))
+                      (call-interactively 'paredit-kill)
+                      (call-interactively 'yank)
+                      (if (not (equal text (buffer-string)))
+                          (error "Before kill %S, after yank %S."
+                                 text
+                                 (buffer-string))))))
+                (let ((kill-ring nil))
+                  (call-interactively 'paredit-kill)))
+  '(("|" error)
+    ("| " "|" error)
+    (" |" error)
+    ("| \n "
      ;; This ought to be an intermediate step, but evidently it is only
      ;; in recent versions of GNU Emacs with `show-trailing-whitespace'
      ;; set to thanks to some brain damage in `kill-line'.
      ;;
      ;; "|\n "
      "| " "|" error)
+    (" |\n " " | " " |" error)
+    (" \n| " " \n|" error)
+
+    ("|( )" "|" error)
     ("(| )" "(|)" "(|)")
-    ("(     |        )" "(     |)" "(     |)")
+    ("( |)" "( |)")
+    ("( )|" error)
+
+    ("|(     )" "|" error)
+    ("(|     )" "(|)" "(|)")
+    ("( |    )" "( |)" "( |)")
+    ("(  |   )" "(  |)" "(  |)")
+    ("(   |  )" "(   |)" "(   |)")
+    ("(    | )" "(    |)" "(    |)")
+    ("(     |)" "(     |)" "(     |)")
+
     ("|(\n)" "|" error)
+    ("(|\n)" "(|)" "(|)")
+    ("(\n|)" "(\n|)")
+    ("(\n)|" error)
+
     ("|(\n)\n" "|\n" "|" error)
+    ("(|\n)\n" "(|)\n" "(|)\n")
+    ("(\n|)\n" "(\n|)\n" "(\n|)\n")
+    ("(\n)|\n" "(\n)|" error)
+    ("(\n)\n|" error)
+
     ("|\"\n\"" "|" error)
+    ("\"|\n\"" "\"|\"" "\"|\"")
+    ("\"\n|\"" "\"\n|\"")
+    ("\"\n\"|" error)
+
     ("|\"\n\"\n" "|\n" "|" error)
+    ("\"|\n\"\n" "\"|\"\n" "\"|\"\n")
+    ("\"\n|\"\n" "\"\n|\"\n" "\"\n|\"\n")
+    ("\"\n\"|\n" "\"\n\"|" error)
+    ("\"\n\"\n|" error)
+
+    ("|(a (b) (c)\n   (d) (e))" "|" error)
+    ("(a| (b) (c)\n   (d) (e))"
+     "(a|\n   (d) (e))"
+     "(a|   (d) (e))"
+     "(a|)"
+     "(a|)")
     ("(a |(b) (c)\n   (d) (e))"
      "(a |\n   (d) (e))"
      "(a |   (d) (e))"
      "(a |)"
      "(a |)")
+    ("(a (|b) (c)\n   (d) (e))"
+     "(a (|) (c)\n   (d) (e))"
+     "(a (|) (c)\n   (d) (e))")
+    ("(a (b|) (c)\n   (d) (e))" "(a (b|) (c)\n   (d) (e))")
+    ("(a (b)| (c)\n   (d) (e))"
+     "(a (b)|\n   (d) (e))"
+     "(a (b)|   (d) (e))"
+     "(a (b)|)"
+     "(a (b)|)")
+    ("(a (b) |(c)\n   (d) (e))"
+     "(a (b) |\n   (d) (e))"
+     "(a (b) |   (d) (e))"
+     "(a (b) |)"
+     "(a (b) |)")
+    ("(a (b) (|c)\n   (d) (e))"
+     "(a (b) (|)\n   (d) (e))"
+     "(a (b) (|)\n   (d) (e))")
+    ("(a (b) (c|)\n   (d) (e))" "(a (b) (c|)\n   (d) (e))")
+    ("(a (b) (c)|\n   (d) (e))"
+     "(a (b) (c)|   (d) (e))"
+     "(a (b) (c)|)"
+     "(a (b) (c)|)")
+    ("(a (b) (c)\n|   (d) (e))"
+     "(a (b) (c)\n|)"
+     "(a (b) (c)\n|)")
+    ("(a (b) (c)\n |  (d) (e))"
+     "(a (b) (c)\n |)"
+     "(a (b) (c)\n |)")
+    ("(a (b) (c)\n  | (d) (e))"
+     "(a (b) (c)\n  |)"
+     "(a (b) (c)\n  |)")
+    ("(a (b) (c)\n   |(d) (e))"
+     "(a (b) (c)\n   |)"
+     "(a (b) (c)\n   |)")
+    ("(a (b) (c)\n   (|d) (e))"
+     "(a (b) (c)\n   (|) (e))"
+     "(a (b) (c)\n   (|) (e))")
+    ("(a (b) (c)\n   (d|) (e))" "(a (b) (c)\n   (d|) (e))")
+    ("(a (b) (c)\n   (d)| (e))"
+     "(a (b) (c)\n   (d)|)"
+     "(a (b) (c)\n   (d)|)")
+    ("(a (b) (c)\n   (d) |(e))"
+     "(a (b) (c)\n   (d) |)"
+     "(a (b) (c)\n   (d) |)")
+    ("(a (b) (c)\n   (d) (|e))"
+     "(a (b) (c)\n   (d) (|))"
+     "(a (b) (c)\n   (d) (|))")
+    ("(a (b) (c)\n   (d) (e|))" "(a (b) (c)\n   (d) (e|))")
+    ("(a (b) (c)\n   (d) (e)|)" "(a (b) (c)\n   (d) (e)|)")
+    ("(a (b) (c)\n   (d) (e))|" error)
+
+    ("|(a ((b) (c)\n    (d) (e)) (f))" "|" error)
+    ("(|a ((b) (c)\n    (d) (e)) (f))" "(| (f))" "(|)" "(|)")
+    ("(a| ((b) (c)\n    (d) (e)) (f))" "(a| (f))" "(a|)" "(a|)")
+    ("(a |((b) (c)\n    (d) (e)) (f))" "(a | (f))" "(a |)" "(a |)")
     ("(a (|(b) (c)\n    (d) (e)) (f))"
      "(a (|\n    (d) (e)) (f))"
      "(a (|    (d) (e)) (f))"
      "(a (|) (f))"
      "(a (|) (f))")
-    ("(a |((b) (c)\n    (d) (e)) (f))"
-     "(a | (f))"
-     "(a |)"
-     "(a |)")
+    ("(a ((|b) (c)\n    (d) (e)) (f))"
+     "(a ((|) (c)\n    (d) (e)) (f))"
+     "(a ((|) (c)\n    (d) (e)) (f))")
+    ("(a ((b|) (c)\n    (d) (e)) (f))"
+     "(a ((b|) (c)\n    (d) (e)) (f))")
+    ("(a ((b)| (c)\n    (d) (e)) (f))"
+     "(a ((b)|\n    (d) (e)) (f))"
+     "(a ((b)|    (d) (e)) (f))"
+     "(a ((b)|) (f))"
+     "(a ((b)|) (f))")
+    ("(a ((b) |(c)\n    (d) (e)) (f))"
+     "(a ((b) |\n    (d) (e)) (f))"
+     "(a ((b) |    (d) (e)) (f))"
+     "(a ((b) |) (f))"
+     "(a ((b) |) (f))")
+    ("(a ((b) (|c)\n    (d) (e)) (f))"
+     "(a ((b) (|)\n    (d) (e)) (f))"
+     "(a ((b) (|)\n    (d) (e)) (f))")
+    ("(a ((b) (c|)\n    (d) (e)) (f))" "(a ((b) (c|)\n    (d) (e)) (f))")
+    ("(a ((b) (c)|\n    (d) (e)) (f))"
+     "(a ((b) (c)|    (d) (e)) (f))"
+     "(a ((b) (c)|) (f))"
+     "(a ((b) (c)|) (f))")
+    ("(a ((b) (c)\n|    (d) (e)) (f))"
+     "(a ((b) (c)\n|) (f))"
+     "(a ((b) (c)\n|) (f))")
+    ("(a ((b) (c)\n |   (d) (e)) (f))"
+     "(a ((b) (c)\n |) (f))"
+     "(a ((b) (c)\n |) (f))")
+    ("(a ((b) (c)\n  |  (d) (e)) (f))"
+     "(a ((b) (c)\n  |) (f))"
+     "(a ((b) (c)\n  |) (f))")
+    ("(a ((b) (c)\n   | (d) (e)) (f))"
+     "(a ((b) (c)\n   |) (f))"
+     "(a ((b) (c)\n   |) (f))")
+    ("(a ((b) (c)\n    |(d) (e)) (f))"
+     "(a ((b) (c)\n    |) (f))"
+     "(a ((b) (c)\n    |) (f))")
+    ("(a ((b) (c)\n    (|d) (e)) (f))"
+     "(a ((b) (c)\n    (|) (e)) (f))"
+     "(a ((b) (c)\n    (|) (e)) (f))")
+    ("(a ((b) (c)\n    (d|) (e)) (f))" "(a ((b) (c)\n    (d|) (e)) (f))")
+    ("(a ((b) (c)\n    (d)| (e)) (f))"
+     "(a ((b) (c)\n    (d)|) (f))"
+     "(a ((b) (c)\n    (d)|) (f))")
+    ("(a ((b) (c)\n    (d) |(e)) (f))"
+     "(a ((b) (c)\n    (d) |) (f))"
+     "(a ((b) (c)\n    (d) |) (f))")
+    ("(a ((b) (c)\n    (d) (|e)) (f))"
+     "(a ((b) (c)\n    (d) (|)) (f))"
+     "(a ((b) (c)\n    (d) (|)) (f))")
+    ("(a ((b) (c)\n    (d) (e|)) (f))" "(a ((b) (c)\n    (d) (e|)) (f))")
+    ("(a ((b) (c)\n    (d) (e)|) (f))" "(a ((b) (c)\n    (d) (e)|) (f))")
+    ("(a ((b) (c)\n    (d) (e))| (f))"
+     "(a ((b) (c)\n    (d) (e))|)"
+     "(a ((b) (c)\n    (d) (e))|)")
+    ("(a ((b) (c)\n    (d) (e)) |(f))"
+     "(a ((b) (c)\n    (d) (e)) |)"
+     "(a ((b) (c)\n    (d) (e)) |)")
+    ("(a ((b) (c)\n    (d) (e)) (|f))"
+     "(a ((b) (c)\n    (d) (e)) (|))"
+     "(a ((b) (c)\n    (d) (e)) (|))")
+    ("(a ((b) (c)\n    (d) (e)) (f|))" "(a ((b) (c)\n    (d) (e)) (f|))")
+    ("(a ((b) (c)\n    (d) (e)) (f)|)" "(a ((b) (c)\n    (d) (e)) (f)|)")
+    ("(a ((b) (c)\n    (d) (e)) (f))|" error)
+
+    ("|(a \"(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))" "|" error)
+    ("(|a \"(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))" "(| (f))" "(|)" "(|)")
+    ("(a| \"(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
+     "(a| (f))"
+     "(a|)"
+     "(a|)")
     ("(a |\"(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
      "(a | (f))"
      "(a |)"
      "(a |)")
+    ("(a \"|(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
+     "(a \"|\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
+     "(a \"| )  { ;;;; \n\n\n(d)( (e);\" (f))"
+     "(a \"|\n\n\n(d)( (e);\" (f))"
+     "(a \"|\n\n(d)( (e);\" (f))"
+     "(a \"|\n(d)( (e);\" (f))"
+     "(a \"|(d)( (e);\" (f))"
+     "(a \"|\" (f))"
+     "(a \"|\" (f))")
+    ("(a \"(b) (c)|\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
+     "(a \"(b) (c)| )  { ;;;; \n\n\n(d)( (e);\" (f))"
+     "(a \"(b) (c)|\n\n\n(d)( (e);\" (f))"
+     "(a \"(b) (c)|\n\n(d)( (e);\" (f))"
+     "(a \"(b) (c)|\n(d)( (e);\" (f))"
+     "(a \"(b) (c)|(d)( (e);\" (f))"
+     "(a \"(b) (c)|\" (f))"
+     "(a \"(b) (c)|\" (f))")
+    ("(a \"(b) (c)\n )  { ;;;; |\n\n\n(d)( (e);\" (f))"
+     "(a \"(b) (c)\n )  { ;;;; |\n\n(d)( (e);\" (f))"
+     "(a \"(b) (c)\n )  { ;;;; |\n(d)( (e);\" (f))"
+     "(a \"(b) (c)\n )  { ;;;; |(d)( (e);\" (f))"
+     "(a \"(b) (c)\n )  { ;;;; |\" (f))"
+     "(a \"(b) (c)\n )  { ;;;; |\" (f))")
+    ("(a \"(b) (c)\n )  { ;;;; \n\n\n|(d)( (e);\" (f))"
+     "(a \"(b) (c)\n )  { ;;;; \n\n\n|\" (f))"
+     "(a \"(b) (c)\n )  { ;;;; \n\n\n|\" (f))")
+
+    ("|x(\n)(z)" "|(z)" "|" error)
     ("x|(\n)(z)" "x|(z)" "x|" error)
+    ("x(|\n)(z)" "x(|)(z)" "x(|)(z)")
+    ("x(\n|)(z)" "x(\n|)(z)")
+    ("x(\n)|(z)" "x(\n)|" error)
+    ("x(\n)(|z)" "x(\n)(|)" "x(\n)(|)")
+    ("x(\n)(z|)" "x(\n)(z|)")
+    ("x(\n)(z)|" error)
+
+    ("|x\"\n\"(z)" "|(z)" "|" error)
     ("x|\"\n\"(z)" "x|(z)" "x|" error)
-    ("(foo ;; |bar\n baz)"
-     "(foo ;; |\n baz)"
-     error)
-    ("(foo |;; bar\n baz)"
-     "(foo |\n baz)"
-     "(foo | baz)"
-     "(foo |)"
-     "(foo |)")
-    ("|(foo bar) ;baz" "|" error)
-    ("|(foo bar) ;baz\n" "|\n" "|" error)
-    ("|(foo\n bar) ;baz" "| ;baz" "|" error)
-    ("|(foo\n bar) ;baz\n" "| ;baz\n" "|\n" "|" error)
-    (";foo|\n(bar)\n" ";foo|(bar)\n" ";foo|\n" ";foo|" error)
-    (";foo|\n(bar\n baz)\n" error)))
+    ("x\"|\n\"(z)" "x\"|\"(z)" "x\"|\"(z)")
+    ("x\"\n|\"(z)" "x\"\n|\"(z)")
+    ("x\"\n\"|(z)" "x\"\n\"|" error)
+    ("x\"\n\"(|z)" "x\"\n\"(|)" "x\"\n\"(|)")
+    ("x\"\n\"(z|)" "x\"\n\"(z|)")
+    ("x\"\n\"(z)|" error)
+
+    ("|(f ;; b\n z)" "|" error)
+    ("(|f ;; b\n z)" "(|\n z)" "(| z)" "(|)" "(|)")
+    ("(f| ;; b\n z)" "(f|\n z)" "(f| z)" "(f|)" "(f|)")
+    ("(f |;; b\n z)" "(f |\n z)" "(f | z)" "(f |)" "(f |)")
+    ("(f ;|; b\n z)" "(f ;|\n z)" error)
+    ("(f ;;| b\n z)" "(f ;;|\n z)" error)
+    ("(f ;; |b\n z)" "(f ;; |\n z)" error)
+    ("(f ;; b|\n z)" error)
+    ("(f ;; b\n| z)" "(f ;; b\n|)" "(f ;; b\n|)")
+    ("(f ;; b\n |z)" "(f ;; b\n |)" "(f ;; b\n |)")
+    ("(f ;; b\n z|)" "(f ;; b\n z|)" "(f ;; b\n z|)")
+    ("(f ;; b\n z)|" error)
+
+    ("|(f b) ;z" "|" error)
+    ("(|f b) ;z" "(|) ;z" "(|) ;z")
+    ("(f| b) ;z" "(f|) ;z" "(f|) ;z")
+    ("(f |b) ;z" "(f |) ;z" "(f |) ;z")
+    ("(f b|) ;z" "(f b|) ;z" "(f b|) ;z")
+    ("(f b)| ;z" "(f b)|" error)
+    ("(f b) |;z" "(f b) |" error)
+    ("(f b) ;|z" "(f b) ;|" error)
+    ("(f b) ;z|" error)
+
+    ("|(f b) ;z\n" "|\n" "|" error)
+    ("(|f b) ;z\n" "(|) ;z\n" "(|) ;z\n")
+    ("(f| b) ;z\n" "(f|) ;z\n" "(f|) ;z\n")
+    ("(f |b) ;z\n" "(f |) ;z\n" "(f |) ;z\n")
+    ("(f b|) ;z\n" "(f b|) ;z\n")
+    ("(f b)| ;z\n" "(f b)|\n" "(f b)|" error)
+    ("(f b) |;z\n" "(f b) |\n" "(f b) |" error)
+    ("(f b) ;|z\n" "(f b) ;|\n" "(f b) ;|" error)
+    ("(f b) ;z|\n" "(f b) ;z|" error)
+    ("(f b) ;z\n|" error)
+
+    ("|(f\n b) ;z" "| ;z" "|" error)
+    ("(|f\n b) ;z" "(|\n b) ;z" "(| b) ;z" "(|) ;z" "(|) ;z")
+    ("(f|\n b) ;z" "(f| b) ;z" "(f|) ;z" "(f|) ;z")
+    ("(f\n| b) ;z" "(f\n|) ;z" "(f\n|) ;z")
+    ("(f\n |b) ;z" "(f\n |) ;z" "(f\n |) ;z")
+    ("(f\n b|) ;z" "(f\n b|) ;z")
+    ("(f\n b)| ;z" "(f\n b)|" error)
+    ("(f\n b) |;z" "(f\n b) |" error)
+    ("(f\n b) ;|z" "(f\n b) ;|" error)
+    ("(f\n b) ;z|" error)
+
+    ("|(f\n b) ;z\n" "| ;z\n" "|\n" "|" error)
+    ("(|f\n b) ;z\n" "(|\n b) ;z\n" "(| b) ;z\n" "(|) ;z\n" "(|) ;z\n")
+    ("(f|\n b) ;z\n" "(f| b) ;z\n" "(f|) ;z\n" "(f|) ;z\n")
+    ("(f\n| b) ;z\n" "(f\n|) ;z\n" "(f\n|) ;z\n")
+    ("(f\n |b) ;z\n" "(f\n |) ;z\n" "(f\n |) ;z\n")
+    ("(f\n b|) ;z\n" "(f\n b|) ;z\n")
+    ("(f\n b)| ;z\n" "(f\n b)|\n" "(f\n b)|" error)
+    ("(f\n b) |;z\n" "(f\n b) |\n" "(f\n b) |" error)
+    ("(f\n b) ;|z\n" "(f\n b) ;|\n" "(f\n b) ;|" error)
+    ("(f\n b) ;z|\n" "(f\n b) ;z|" error)
+    ("(f\n b) ;z\n|" error)
+
+    ("|;f\n(b)\n" "|\n(b)\n" "|(b)\n" "|\n" "|" error)
+    (";|f\n(b)\n" ";|\n(b)\n" ";|(b)\n" ";|\n" ";|" error)
+    (";f|\n(b)\n" ";f|(b)\n" ";f|\n" ";f|" error)
+    (";f\n|(b)\n" ";f\n|\n" ";f\n|" error)
+    (";f\n(|b)\n" ";f\n(|)\n" ";f\n(|)\n")
+    (";f\n(b|)\n" ";f\n(b|)\n")
+    (";f\n(b)|\n" ";f\n(b)|" error)
+    (";f\n(b)\n|" error)
+
+    ("|;f\n(b\n z)\n" "|\n(b\n z)\n" "|(b\n z)\n" "|\n" "|" error)
+    (";|f\n(b\n z)\n" ";|\n(b\n z)\n" error)
+    (";f|\n(b\n z)\n" error)
+    (";f\n|(b\n z)\n" ";f\n|\n" ";f\n|" error)
+    (";f\n(|b\n z)\n" ";f\n(|\n z)\n" ";f\n(| z)\n" ";f\n(|)\n" ";f\n(|)\n")
+    (";f\n(b|\n z)\n" ";f\n(b| z)\n" ";f\n(b|)\n" ";f\n(b|)\n")
+    (";f\n(b\n| z)\n" ";f\n(b\n|)\n" ";f\n(b\n|)\n")
+    (";f\n(b\n |z)\n" ";f\n(b\n |)\n" ";f\n(b\n |)\n")
+    (";f\n(b\n z|)\n" ";f\n(b\n z|)\n")))
 
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)

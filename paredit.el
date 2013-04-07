@@ -1248,14 +1248,18 @@ With a `C-u' prefix argument, simply delete a character forward,
            (backward-delete-char 1)
            (delete-char 1)))))
 
-(defun paredit-forward-delete-in-comment ()
-  ;; Point is in a comment, possibly at eol.  Refuse to delete a
-  ;; comment end if moving the next line into the comment would break
-  ;; structure.
+(defun paredit-check-forward-delete-in-comment ()
+  ;; Point is in a comment, possibly at eol.  We are about to delete
+  ;; some characters forward; if we are at eol, we are about to delete
+  ;; the line break.  Refuse to do so if if moving the next line into
+  ;; the comment would break structure.
   (if (eolp)
       (let ((next-line-start (point-at-bol 2))
             (next-line-end (point-at-eol 2)))
-        (paredit-check-region next-line-start next-line-end)))
+        (paredit-check-region next-line-start next-line-end))))
+
+(defun paredit-forward-delete-in-comment ()
+  (paredit-check-forward-delete-in-comment)
   (delete-char 1))
 
 (defun paredit-forward-delete-comment-start ()
@@ -1397,13 +1401,10 @@ With a numeric prefix argument N, do `kill-line' that many times."
                         (cdr (paredit-string-start+end-points)))))))
 
 (defun paredit-kill-line-in-comment ()
-  ;; If we're at the end of line, this is the same as deleting the line
-  ;; end, which `paredit-forward-delete-in-comment' handles carefully.
   ;; The variable `kill-whole-line' is not relevant: the point is in a
   ;; comment, and hence not at the beginning of the line.
-  (if (eolp)
-      (paredit-forward-delete-in-comment)
-      (kill-line)))
+  (paredit-check-forward-delete-in-comment)
+  (kill-line))
 
 (defun paredit-kill-sexps-on-line ()
   (if (paredit-in-char-p)               ; Move past the \ and prefix.
