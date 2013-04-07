@@ -2032,23 +2032,43 @@ Inside a string, unescape all backslashes, or signal an error if doing
   (interactive "P")
   (if (paredit-in-string-p)
       (paredit-splice-string argument)
-      (save-excursion
-        (paredit-kill-surrounding-sexps-for-splice argument)
-        (let ((end (point)))
-          (backward-up-list)            ; Go up to the beginning...
-          (save-excursion
-            (forward-char 1)            ; (Skip over leading whitespace
-            (paredit-skip-whitespace t end)
-            (setq end (point)))         ;   for the `delete-region'.)
-          (let ((indent-start nil) (indent-end nil))
+    (if (paredit-in-comment-p)
+        (error "Can't splice comment."))
+    (paredit-handle-sexp-errors (paredit-enclosing-list-start)
+      (error "Can't splice top level."))
+    (paredit-kill-surrounding-sexps-for-splice argument)
+    (let ((delete-start (paredit-enclosing-list-start))
+          (delete-end
+           (let ((limit
+                  (save-excursion
+                    (paredit-ignore-sexp-errors (forward-sexp) (backward-sexp))
+                    (point))))
+             (save-excursion
+               (backward-up-list)
+               (forward-char +1)
+               (paredit-skip-whitespace t limit)
+               (point)))))
+      (let ((end-marker (make-marker)))
+        (save-excursion
+          (up-list)
+          (backward-delete-char +1)
+          (set-marker end-marker (point)))
+        (delete-region delete-start delete-end)
+        (paredit-splice-reindent delete-start (marker-position end-marker))))))
+
+(defun paredit-splice-reindent (start end)
+  (paredit-preserving-column
+    ;; If we changed the first subform of the enclosing list, we must
+    ;; reindent the whole enclosing list.
+    (if (paredit-handle-sexp-errors
             (save-excursion
-              (setq indent-start (point))
-              (forward-sexp)            ; Go forward an expression, to
-              (backward-delete-char 1)  ;   delete the end delimiter.
-              (setq indent-end (point)))
-            (delete-region (point) end) ; ...to delete the open char.
-            ;; Reindent only the region we preserved.
-            (indent-region indent-start indent-end nil))))))
+              (backward-up-list)
+              (down-list)
+              (paredit-ignore-sexp-errors (forward-sexp))
+              (< start (point)))
+          nil)
+        (save-excursion (backward-up-list) (indent-sexp))
+        (paredit-indent-region start end))))
 
 (defun paredit-kill-surrounding-sexps-for-splice (argument)
   (cond ((or (paredit-in-string-p)

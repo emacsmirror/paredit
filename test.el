@@ -1035,6 +1035,144 @@ Four arguments: the paredit command, the text of the buffer
     ("(foo |(bar #\\x \"baz \\\\ quux\") zot)"
      "(foo \"|(bar #\\\\x \\\"baz \\\\\\\\ quux\\\")\" zot)")))
 
+(paredit-test 'paredit-splice-sexp
+  '(("|(f (g\n    h))" error)
+    ("(|f (g\n    h))" "|f (g\n   h)")
+    ("(f| (g\n    h))" "f| (g\n   h)")
+    ("(f |(g\n    h))" "f |(g\n   h)")
+    ("(f (|g\n    h))" "(f |g\n   h)")
+    ("(f (g|\n    h))" "(f g|\n   h)")
+    ("(f (g\n|    h))" "(f g\n|   h)")
+    ("(f (g\n |   h))" "(f g\n |  h)")
+    ("(f (g\n  |  h))" "(f g\n  | h)")
+    ("(f (g\n   | h))" "(f g\n   |h)")
+    ("(f (g\n    |h))" "(f g\n   |h)")
+    ("(f (g\n    h|))" "(f g\n   h|)")
+    ("(f (g\n    h)|)" "f (g\n   h)|")
+    ("(f (g\n    h))|" error)
+
+    ;; Omit whitespace if appropriate.
+    ("|(f (\n    h))" error)
+    ("(|f (\n    h))" "|f (\n   h)")
+    ("(f| (\n    h))" "f| (\n   h)")
+    ("(f |(\n    h))" "f |(\n   h)")
+    ("(f (|\n    h))" "(f |h)")
+    ("(f (\n|    h))" "(f |h)")
+    ("(f (\n |   h))" "(f |h)")
+    ("(f (\n  |  h))" "(f |h)")
+    ("(f (\n   | h))" "(f |h)")
+    ("(f (\n    |h))" "(f |h)")
+    ("(f (\n    h|))" "(f h|)")
+    ("(f (\n    h)|)" "f (\n   h)|")
+    ("(f (\n    h))|" error)
+
+    ;; But leave comments intact.
+    ("(f (|   ;xy\n    h))" "(f |;xy\n h)")
+    ("(f ( |  ;xy\n    h))" "(f |;xy\n h)")
+    ("(f (  | ;xy\n    h))" "(f |;xy\n h)")
+    ("(f (   |;xy\n    h))" "(f |;xy\n h)")
+    ("(f (   ;|xy\n    h))" error)
+    ("(f (   ;x|y\n    h))" error)
+    ("(f (   ;xy|\n    h))" error)
+    ("(f (   ;xy\n|    h))" "(f ;xy\n| h)")
+    ("(f (   ;xy\n |   h))" "(f ;xy\n |h)")
+    ("(f (   ;xy\n  |  h))" "(f ;xy\n |h)")
+    ("(f (   ;xy\n   | h))" "(f ;xy\n |h)")
+    ("(f (   ;xy\n    |h))" "(f ;xy\n |h)")
+    ("(f (   ;xy\n    h|))" "(f ;xy\n h|)")
+
+    ;; Don't touch indentation outside a limited scope.
+    ("(foo (|bar)\n          baz)" "(foo |bar\n          baz)")
+    ("(foo (b|ar)\n          baz)" "(foo b|ar\n          baz)")
+    ("(foo (ba|r)\n          baz)" "(foo ba|r\n          baz)")
+    ("(foo (bar|)\n          baz)" "(foo bar|\n          baz)")
+    ("  (foo\n  (|bar baz))" "  (foo\n  |bar baz)")
+    ("  (foo\n  (b|ar baz))" "  (foo\n  b|ar baz)")
+    ("  (foo\n  (ba|r baz))" "  (foo\n  ba|r baz)")
+    ("  (foo\n  (bar| baz))" "  (foo\n  bar| baz)")
+    ("  (foo\n  (bar |baz))" "  (foo\n  bar |baz)")
+    ("  (foo\n  (bar b|az))" "  (foo\n  bar b|az)")
+    ("  (foo\n  (bar ba|z))" "  (foo\n  bar ba|z)")
+    ("  (foo\n  (bar baz|))" "  (foo\n  bar baz|)")
+    ("  (foo (|(bar\n         baz)\n        quux)\n zot)"
+     "  (foo |(bar\n        baz)\n       quux\n zot)")
+    ("  (foo ((|bar\n         baz)\n        quux)\n zot)"
+     "  (foo (|bar\n        baz\n        quux)\n zot)")
+    ("  (foo ((b|ar\n         baz)\n        quux)\n zot)"
+     "  (foo (b|ar\n        baz\n        quux)\n zot)")
+    ("  (foo ((ba|r\n         baz)\n        quux)\n zot)"
+     "  (foo (ba|r\n        baz\n        quux)\n zot)")
+    ("  (foo ((ba|r\n         baz)\n        quux)\n zot)"
+     "  (foo (ba|r\n        baz\n        quux)\n zot)")
+    ("  (foo ((bar|\n         baz)\n        quux)\n zot)"
+     "  (foo (bar|\n        baz\n        quux)\n zot)")
+    ("  (foo ((bar\n|         baz)\n        quux)\n zot)"
+     "  (foo (bar\n|        baz\n        quux)\n zot)")
+    ("  (foo ((bar\n |        baz)\n        quux)\n zot)"
+     "  (foo (bar\n |       baz\n        quux)\n zot)")
+    ("  (foo ((bar\n  |       baz)\n        quux)\n zot)"
+     "  (foo (bar\n  |      baz\n        quux)\n zot)")
+    ("  (foo ((bar\n   |      baz)\n        quux)\n zot)"
+     "  (foo (bar\n   |     baz\n        quux)\n zot)")
+    ("  (foo ((bar\n    |     baz)\n        quux)\n zot)"
+     "  (foo (bar\n    |    baz\n        quux)\n zot)")
+    ("  (foo ((bar\n     |    baz)\n        quux)\n zot)"
+     "  (foo (bar\n     |   baz\n        quux)\n zot)")
+    ("  (foo ((bar\n      |   baz)\n        quux)\n zot)"
+     "  (foo (bar\n      |  baz\n        quux)\n zot)")
+    ("  (foo ((bar\n       |  baz)\n        quux)\n zot)"
+     "  (foo (bar\n       | baz\n        quux)\n zot)")
+    ("  (foo ((bar\n        | baz)\n        quux)\n zot)"
+     "  (foo (bar\n        |baz\n        quux)\n zot)")
+    ("  (foo ((bar\n         |baz)\n        quux)\n zot)"
+     "  (foo (bar\n        |baz\n        quux)\n zot)")
+
+    ("  (foo ((bar\n         b|az)\n        quux)\n zot)"
+     "  (foo (bar\n        b|az\n        quux)\n zot)")
+    ("  (foo ((bar\n         ba|z)\n        quux)\n zot)"
+     "  (foo (bar\n        ba|z\n        quux)\n zot)")
+    ("  (foo ((bar\n         baz|)\n        quux)\n zot)"
+     "  (foo (bar\n        baz|\n        quux)\n zot)")
+    ("  (foo ((bar\n         baz)|\n        quux)\n zot)"
+     "  (foo (bar\n        baz)|\n       quux\n zot)")
+    ("  (foo ((bar\n         baz)\n|        quux)\n zot)"
+     "  (foo (bar\n        baz)\n|       quux\n zot)")
+    ("  (foo ((bar\n         baz)\n |       quux)\n zot)"
+     "  (foo (bar\n        baz)\n |      quux\n zot)")
+    ("  (foo ((bar\n         baz)\n  |      quux)\n zot)"
+     "  (foo (bar\n        baz)\n  |     quux\n zot)")
+    ("  (foo ((bar\n         baz)\n   |     quux)\n zot)"
+     "  (foo (bar\n        baz)\n   |    quux\n zot)")
+    ("  (foo ((bar\n         baz)\n    |    quux)\n zot)"
+     "  (foo (bar\n        baz)\n    |   quux\n zot)")
+    ("  (foo ((bar\n         baz)\n     |   quux)\n zot)"
+     "  (foo (bar\n        baz)\n     |  quux\n zot)")
+    ("  (foo ((bar\n         baz)\n      |  quux)\n zot)"
+     "  (foo (bar\n        baz)\n      | quux\n zot)")
+    ("  (foo ((bar\n         baz)\n       | quux)\n zot)"
+     "  (foo (bar\n        baz)\n       |quux\n zot)")
+    ("  (foo ((bar\n         baz)\n        |quux)\n zot)"
+     "  (foo (bar\n        baz)\n       |quux\n zot)")
+    ("  (foo ((bar\n         baz)\n        q|uux)\n zot)"
+     "  (foo (bar\n        baz)\n       q|uux\n zot)")
+    ("  (foo ((bar\n         baz)\n        qu|ux)\n zot)"
+     "  (foo (bar\n        baz)\n       qu|ux\n zot)")
+    ("  (foo ((bar\n         baz)\n        quu|x)\n zot)"
+     "  (foo (bar\n        baz)\n       quu|x\n zot)")
+    ("  (foo ((bar\n         baz)\n        quux|)\n zot)"
+     "  (foo (bar\n        baz)\n       quux|\n zot)")
+
+    ;; But adjust the whole form's indentation if we change the operator.
+    ("((|let) ((a b))\n       c)" "(|let ((a b))\n  c)")
+    ("((l|et) ((a b))\n       c)" "(l|et ((a b))\n  c)")
+    ("((le|t) ((a b))\n       c)" "(le|t ((a b))\n  c)")
+    ("((let|) ((a b))\n       c)" "(let| ((a b))\n  c)")
+
+    ;; Uh oh -- you can really lose here.
+    ("\"|foo\\\"bar\"" error)
+    ;++ ("(\"|foo\\\;bar\")" error)
+    ))
+
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
   nil)
