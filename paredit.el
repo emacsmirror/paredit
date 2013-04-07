@@ -2526,6 +2526,12 @@ This assumes that `paredit-in-string-p' has already returned true, i.e.
       (forward-sexp 1)
       (cons start (1- (point))))))
 
+(defun paredit-enclosing-string-start ()
+  (car (paredit-string-start+end-points)))
+
+(defun paredit-enclosing-string-end ()
+  (+ 1 (cdr (paredit-string-start+end-points))))
+
 (defun paredit-in-comment-p (&optional state)
   "True if parse state STATE is within a comment.
 If no parse state is supplied, compute one from the beginning of the
