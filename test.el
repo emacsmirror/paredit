@@ -625,6 +625,119 @@ Four arguments: the paredit command, the text of the buffer
     (";f\n(b\n |z)\n" ";f\n(b\n |)\n" ";f\n(b\n |)\n")
     (";f\n(b\n z|)\n" ";f\n(b\n z|)\n")))
 
+(paredit-test 'paredit-backward-barf-sexp
+  '(("|(fo)" error)
+    ;++ I think these are wrong.  There should be a space.
+    ("(|fo)" "|fo()" error)
+    ("(f|o)" "f|o()" error)
+    ("(fo|)" "fo(|)" "fo(|)")
+    ("(fo)|" error)
+
+    ("|(fo (ba bz qx) zt)" error)
+    ("(|fo (ba bz qx) zt)" "|fo ((ba bz qx) zt)" error)
+    ("(f|o (ba bz qx) zt)" "f|o ((ba bz qx) zt)" error)
+    ("(fo| (ba bz qx) zt)" "fo| ((ba bz qx) zt)" error)
+    ("(fo |(ba bz qx) zt)"
+     "fo (|(ba bz qx) zt)"
+     "fo |(ba bz qx) (zt)"
+     error)
+    ("(fo (|ba bz qx) zt)"
+     "(fo |ba (bz qx) zt)"
+     "fo (|ba (bz qx) zt)"
+     "fo |ba ((bz qx) zt)"
+     error)
+    ("(fo (b|a bz qx) zt)"
+     "(fo b|a (bz qx) zt)"
+     "fo (b|a (bz qx) zt)"
+     "fo b|a ((bz qx) zt)"
+     error)
+    ("(fo (ba| bz qx) zt)"
+     "(fo ba| (bz qx) zt)"
+     "fo (ba| (bz qx) zt)"
+     "fo ba| ((bz qx) zt)"
+     error)
+    ("(fo (ba |bz qx) zt)"
+     "(fo ba (|bz qx) zt)"
+     "(fo ba |bz (qx) zt)"
+     "fo (ba |bz (qx) zt)"
+     "fo ba (|bz (qx) zt)"
+     "fo ba |bz ((qx) zt)"
+     error)
+    ("(fo (ba b|z qx) zt)"
+     "(fo ba (b|z qx) zt)"
+     "(fo ba b|z (qx) zt)"
+     "fo (ba b|z (qx) zt)"
+     "fo ba (b|z (qx) zt)"
+     "fo ba b|z ((qx) zt)"
+     error)
+    ("(fo (ba bz| qx) zt)"
+     "(fo ba (bz| qx) zt)"
+     "(fo ba bz| (qx) zt)"
+     "fo (ba bz| (qx) zt)"
+     "fo ba (bz| (qx) zt)"
+     "fo ba bz| ((qx) zt)"
+     error)
+
+    ("(fo (ba bz |qx) zt)"
+     "(fo ba (bz |qx) zt)"
+     "(fo ba bz (|qx) zt)"
+     "(fo ba bz |qx() zt)"        ;++ Should have a space.
+     "fo (ba bz |qx() zt)"
+     "fo ba (bz |qx() zt)"
+     "fo ba bz (|qx() zt)"
+     "fo ba bz |qx(() zt)"
+     error)
+    ("(fo (ba bz |qx) zt)"
+     "(fo ba (bz |qx) zt)"
+     "(fo ba bz (|qx) zt)"
+     "(fo ba bz |qx() zt)"
+     "fo (ba bz |qx() zt)"
+     "fo ba (bz |qx() zt)"
+     "fo ba bz (|qx() zt)"
+     "fo ba bz |qx(() zt)"
+     error)
+    ("(fo (ba bz q|x) zt)"
+     "(fo ba (bz q|x) zt)"
+     "(fo ba bz (q|x) zt)"
+     "(fo ba bz q|x() zt)"
+     "fo (ba bz q|x() zt)"
+     "fo ba (bz q|x() zt)"
+     "fo ba bz (q|x() zt)"
+     "fo ba bz q|x(() zt)"
+     error)
+    ("(fo (ba bz qx|) zt)"
+     "(fo ba (bz qx|) zt)"
+     "(fo ba bz (qx|) zt)"
+     "(fo ba bz qx(|) zt)"
+     "(fo ba bz qx(|) zt)")
+    ("(fo (ba bz qx)| zt)"
+     "fo ((ba bz qx)| zt)"
+     "fo (ba bz qx)| (zt)"
+     error)
+    ("(fo (ba bz qx) |zt)"
+     "fo ((ba bz qx) |zt)"
+     "fo (ba bz qx) (|zt)"
+     "fo (ba bz qx) |zt()"
+     error)
+    ("(fo (ba bz qx) z|t)"
+     "fo ((ba bz qx) z|t)"
+     "fo (ba bz qx) (z|t)"
+     "fo (ba bz qx) z|t()"
+     error)
+    ("(fo (ba bz qx) zt|)"
+     "fo ((ba bz qx) zt|)"
+     "fo (ba bz qx) (zt|)"
+     "fo (ba bz qx) zt(|)"
+     "fo (ba bz qx) zt(|)")
+    ("(fo (ba bz qx) zt)|" error)
+
+    ;++ Test interaction with comments...
+
+    ("\"|\"" error)
+    ("\"|xy\"" error)                   ;++ Could be done.  Why not?
+    ("\"x|y\"" error)
+    ("\"xy|\"" error)))
+
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
   nil)
