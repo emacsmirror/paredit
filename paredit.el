@@ -2380,45 +2380,77 @@ Automatically reindent the barfed S-expression and the form from which
   "Join the S-expressions adjacent on either side of the point.
 Both must be lists, strings, or atoms; error if there is a mismatch."
   (interactive)
-  ;++ How ought this to handle comments intervening symbols or strings?
-  (save-excursion
-    (if (or (paredit-in-comment-p)
-            (paredit-in-string-p)
-            (paredit-in-char-p))
-        (error "Invalid context for joining S-expressions.")
-      (let ((left-point  (paredit-point-at-sexp-end))
-            (right-point (paredit-point-at-sexp-start)))
-        (let ((left-char (char-before left-point))
-              (right-char (char-after right-point)))
-          (let ((left-syntax (char-syntax left-char))
-                (right-syntax (char-syntax right-char)))
-            (cond ((< right-point left-point)
-                   (error "Can't join a datum with itself."))
-                  ((and (eq left-syntax  ?\) )
-                        (eq right-syntax ?\( )
-                        (eq left-char (matching-paren right-char))
-                        (eq right-char (matching-paren left-char)))
-                   ;; Leave intermediate formatting alone.
-                   (goto-char right-point)
-                   (delete-char 1)
-                   (goto-char left-point)
-                   (backward-delete-char 1)
-                   ;; Heuristic kludge: (foo)(bar) => (foo bar).
-                   (if (and (= left-point right-point)
-                            (not (or (eq ?\  (char-syntax (char-before)))
-                                     (eq ?\  (char-syntax (char-after))))))
-                       (insert ?\  ))
+  (cond ((paredit-in-comment-p) (error "Can't join S-expressions in comment."))
+        ((paredit-in-string-p) (error "Nothing to join in a string."))
+        ((paredit-in-char-p) (error "Can't join characters.")))
+  (let ((left-point (paredit-point-at-sexp-end))
+        (right-point (paredit-point-at-sexp-start)))
+    (let ((left-char (char-before left-point))
+          (right-char (char-after right-point)))
+      (let ((left-syntax (char-syntax left-char))
+            (right-syntax (char-syntax right-char)))
+        (cond ((< right-point left-point)
+               (error "Can't join a datum with itself."))
+              ((and (eq left-syntax ?\) )
+                    (eq right-syntax ?\( )
+                    (eq left-char (matching-paren right-char))
+                    (eq right-char (matching-paren left-char)))
+               (paredit-join-lists-internal left-point right-point)
+               (paredit-preserving-column
+                 (save-excursion
                    (backward-up-list)
-                   (indent-sexp))
-                  ((and (eq left-syntax  ?\" )
-                        (eq right-syntax ?\" ))
-                   ;; Delete any intermediate formatting.
-                   (delete-region (1- left-point) (1+ right-point)))
-                  ((and (memq left-syntax  '(?w ?_)) ; Word or symbol
-                        (memq right-syntax '(?w ?_)))
-                   (delete-region left-point right-point))
-                  (t
-                   (error "Mismatched S-expressions to join.")))))))))
+                   (indent-sexp))))
+              ((and (eq left-syntax ?\" )
+                    (eq right-syntax ?\" ))
+               ;; Delete any intermediate formatting.
+               (delete-region (1- left-point) (1+ right-point)))
+              ((and (memq left-syntax '(?w ?_)) ; Word or symbol
+                    (memq right-syntax '(?w ?_)))
+               (delete-region left-point right-point))
+              (t (error "Mismatched S-expressions to join.")))))))
+
+(defun paredit-join-lists-internal (left-point right-point)
+  (save-excursion
+    ;; Leave intermediate formatting alone.
+    (goto-char right-point)
+    (delete-char 1)
+    (goto-char left-point)
+    (backward-delete-char 1)
+    ;; Kludge: Add an extra space in several conditions.
+    (if (or
+         ;; (foo)| ;x\n(bar) => (foo | ;x\nbar), not (foo|  ;x\nbar).
+         (and (not (eolp))
+              (save-excursion
+                (paredit-skip-whitespace t (point-at-eol))
+                (eq (char-after) ?\;)))
+         ;; (foo)|(bar) => (foo| bar), not (foo|bar).
+         (and (= left-point right-point)
+              (not (or (eq ?\  (char-syntax (char-before)))
+                       (eq ?\  (char-syntax (char-after)))))))
+        (insert ?\  ))))
+
+;++ How ought paredit-join to handle comments intervening symbols or strings?
+;++ Idea:
+;++
+;++   "foo"   |        ;bar
+;++   "baz"      ;quux
+;++
+;++ =>
+;++
+;++   "foo|baz"       ;bar
+;++              ;quux
+;++
+;++ The point should stay where it is relative to the comments, and the
+;++ the comments' columns should all be preserved, perhaps.  Hmmmm...
+;++ What about this?
+;++
+;++   "foo"           ;bar
+;++       |           ;baz
+;++   "quux"          ;zot
+
+;++ Should rename:
+;++     paredit-point-at-sexp-start     -> paredit-start-of-sexp-after-point
+;++     paredit-point-at-sexp-end       -> paredit-end-of-sexp-before-point
 
 ;;;; Variations on the Lurid Theme
 
