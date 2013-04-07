@@ -173,6 +173,21 @@ Signal an error if no clause matches."
 
   (put 'paredit-ignore-sexp-errors 'lisp-indent-function 0)
 
+  (defmacro paredit-preserving-column (&rest body)
+    "Evaluate BODY and restore point to former column, relative to code.
+Assumes BODY will change only indentation.
+If point was on code, it moves with the code.
+If point was on indentation, it stays in indentation."
+    (let ((column (make-symbol "column"))
+          (indentation (make-symbol "indentation")))
+      `(let ((,column (current-column))
+             (,indentation (paredit-current-indentation)))
+         (let ((value (progn ,@body)))
+           (paredit-restore-column ,column ,indentation)
+           value))))
+
+  (put 'paredit-preserving-column 'lisp-indent-function 0)
+
   nil)
 
 ;;;; Minor Mode Definition
@@ -2611,6 +2626,20 @@ This is independent of context -- it doesn't check what state the
   (save-excursion
     (back-to-indentation)
     (current-column)))
+
+(defun paredit-restore-column (column indentation)
+  ;; Preserve the point's position either in the indentation or in the
+  ;; code: if on code, move with the code; if in indentation, leave it
+  ;; in the indentation, either where it was (if still on indentation)
+  ;; or at the end of the indentation (if the code moved far enough
+  ;; left).
+  (let ((indentation* (paredit-current-indentation)))
+    (goto-char
+     (+ (point-at-bol)
+        (cond ((not (< column indentation))
+               (+ column (- indentation* indentation)))
+              ((<= indentation* column) indentation*)
+              (t column))))))
 
 ;;;; Initialization
 
