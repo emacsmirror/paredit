@@ -13,6 +13,19 @@ The latest version of this file is available at
 
   <http://mumble.net/~campbell/emacs/paredit.release>.
 
+** Version 23
+
+Paredit no longer runs in GNU Emacs 20.  It now requires 21 or later.
+
+Paredit now has a small set of automatic tests.
+
+*** New key: `M-?' is bound to `paredit-convolute-sexp'
+*** New variable: paredit-override-check-parens-function
+*** New command: paredit-delete-region
+*** New command: paredit-kill-region
+*** Renamed command: paredit-recentre-on-sexp -> paredit-recenter-on-sexp
+*** Various bug fixes.
+
 ** Version 22
 
 The copying terms of paredit are now the GPLv3+, rather than the
