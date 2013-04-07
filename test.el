@@ -2,7 +2,7 @@
 
 ;;; Rudimentary, kludgey test suite for paredit -- work in progress!
 
-;; Copyright (C) 2005--2011 Taylor R. Campbell
+;; Copyright (C) 2005--2013 Taylor R. Campbell
 
 ;; This file is part of paredit.
 ;;
