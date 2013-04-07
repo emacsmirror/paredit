@@ -1986,15 +1986,6 @@ By default OPEN and CLOSE are round delimiters."
       (backward-char)))
   (save-excursion (backward-up-list) (indent-sexp)))
 
-(defun paredit-count-sexps-forward ()
-  (save-excursion
-    (let ((n 0) (p nil))                ;hurk
-      (paredit-ignore-sexp-errors
-        (while (setq p (scan-sexps (point) +1))
-          (goto-char p)
-          (setq n (+ n 1))))
-      n)))
-
 (defun paredit-yank-pop (&optional argument)
   "Replace just-yanked text with the next item in the kill ring.
 If this command follows a `yank', just run `yank-pop'.
@@ -2605,6 +2596,16 @@ This assumes that `paredit-in-string-p' has already returned true, i.e.
 (defun paredit-enclosing-string-end ()
   (+ 1 (cdr (paredit-string-start+end-points))))
 
+(defun paredit-enclosing-list-start ()
+  (save-excursion
+    (backward-up-list)
+    (point)))
+
+(defun paredit-enclosing-list-end ()
+  (save-excursion
+    (up-list)
+    (point)))
+
 (defun paredit-in-comment-p (&optional state)
   "True if parse state STATE is within a comment.
 If no parse state is supplied, compute one from the beginning of the
@@ -2613,6 +2614,43 @@ If no parse state is supplied, compute one from the beginning of the
   ;;    else an integer (the current comment nesting)
   (and (nth 4 (or state (paredit-current-parse-state)))
        t))
+
+(defun paredit-prefix-numeric-value (argument)
+  ;++ Kludgerific.
+  (cond ((integerp argument) argument)
+        ((eq argument '-) -1)
+        ((consp argument)
+         (cond ((equal argument '(4)) (paredit-count-sexps-forward))   ;C-u
+               ((equal argument '(16)) (paredit-count-sexps-backward)) ;C-u C-u
+               (t (error "Invalid prefix argument: %S" argument))))
+        ((paredit-region-active-p)
+         (save-excursion
+           (save-restriction
+             (narrow-to-region (region-beginning) (region-end))
+             (cond ((= (point) (point-min)) (paredit-count-sexps-forward))
+                   ((= (point) (point-max)) (paredit-count-sexps-backward))
+                   (t
+                    (error "Point %S is not start or end of region: %S..%S"
+                           (point) (region-beginning) (region-end)))))))
+        (t 1)))
+
+(defun paredit-count-sexps-forward ()
+  (save-excursion
+    (let ((n 0) (p nil))                ;hurk
+      (paredit-ignore-sexp-errors
+        (while (setq p (scan-sexps (point) +1))
+          (goto-char p)
+          (setq n (+ n 1))))
+      n)))
+
+(defun paredit-count-sexps-backward ()
+  (save-excursion
+    (let ((n 0) (p nil))                ;hurk
+      (paredit-ignore-sexp-errors
+        (while (setq p (scan-sexps (point) -1))
+          (goto-char p)
+          (setq n (+ n 1))))
+      n)))
 
 (defun paredit-point-at-sexp-boundary (n)
   (cond ((< n 0) (paredit-point-at-sexp-start))
