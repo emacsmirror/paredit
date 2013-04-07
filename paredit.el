@@ -2510,19 +2510,6 @@ This assumes that `paredit-in-string-p' has already returned true."
     (goto-char (or position (point)))
     (paredit-in-string-escape-p)))
 
-(defun paredit-indent-sexps ()
-  "If in a list, indent all following S-expressions in the list."
-  (let* ((start (point))
-         (end (paredit-handle-sexp-errors (progn (up-list) (point)) nil)))
-    (if end
-        (indent-region start end nil))))
-
-(defun paredit-forward-and-indent ()
-  "Move forward an S-expression, indenting it with `indent-region'."
-  (let ((start (point)))
-    (forward-sexp)
-    (indent-region start (point) nil)))
-
 (defun paredit-skip-whitespace (trailing-p &optional limit)
   "Skip past any whitespace, or until the point LIMIT is reached.
 If TRAILING-P is nil, skip leading whitespace; otherwise, skip trailing
@@ -2550,6 +2537,56 @@ Do not append to any current kill, and
   (let ((this-command nil)
         (last-command nil))
     (kill-region start end)))
+
+;;;;; Reindentation utilities
+
+;++ Should `paredit-indent-sexps' and `paredit-forward-and-indent' use
+;++ `paredit-indent-region' rather than `indent-region'?
+
+(defun paredit-indent-sexps ()
+  "If in a list, indent all following S-expressions in the list."
+  (let* ((start (point))
+         (end (paredit-handle-sexp-errors (progn (up-list) (point)) nil)))
+    (if end
+        (indent-region start end nil))))
+
+(defun paredit-forward-and-indent ()
+  "Move forward an S-expression, indenting it with `indent-region'."
+  (let ((start (point)))
+    (forward-sexp)
+    (indent-region start (point) nil)))
+
+(defun paredit-indent-region (start end)
+  "Indent the region from START to END.
+Don't reindent the line starting at START, however."
+  (if (not (<= start end))
+      (error "Incorrectly related points: %S, %S" start end))
+  (save-excursion
+    (goto-char start)
+    (let ((bol (point-at-bol)))
+      ;; Skip all S-expressions that end on the starting line, but
+      ;; don't go past `end'.
+      (if (and (save-excursion (goto-char end) (not (eq bol (point-at-bol))))
+               (paredit-handle-sexp-errors
+                   (catch 'exit
+                     (while t
+                       (save-excursion
+                         (forward-sexp)
+                         (if (not (eq bol (point-at-bol)))
+                             (throw 'exit t))
+                         (if (not (< (point) end))
+                             (throw 'exit nil)))
+                       (forward-sexp)))
+                 nil))
+          (progn
+            ;; Point is still on the same line, but precedes an
+            ;; S-expression that ends on a different line.
+            (if (not (eq bol (point-at-bol)))
+                (error "Internal error -- we moved forward a line!"))
+            (goto-char (+ 1 (point-at-eol)))
+            (if (not (<= (point) end))
+                (error "Internal error -- we frobnitzed the garfnut!"))
+            (indent-region (point) end nil))))))
 
 ;;;;; S-expression Parsing Utilities
 
