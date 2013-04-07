@@ -24,14 +24,14 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; This file is permanently stored at
-;;;   <http://mumble.net/~campbell/emacs/paredit-23.el>.
-;;;
 ;;; The currently released version of paredit is available at
 ;;;   <http://mumble.net/~campbell/emacs/paredit.el>.
 ;;;
 ;;; The latest beta version of paredit is available at
 ;;;   <http://mumble.net/~campbell/emacs/paredit-beta.el>.
+;;;
+;;; The Git repository for paredit is available at
+;;;   <http://mumble.net/~campbell/git/paredit.git>
 ;;;
 ;;; Release notes are available at
 ;;;   <http://mumble.net/~campbell/emacs/paredit.release>.
