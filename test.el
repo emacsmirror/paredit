@@ -1001,6 +1001,40 @@ Four arguments: the paredit command, the text of the buffer
     ("((x)                                    ;c\n (y)|)" error)
     ("((x)                                    ;c\n (y))|" error)))
 
+(paredit-test 'paredit-meta-doublequote
+  '(("|(fo \"ba\\\" bz\" qx)" "\"|(fo \\\"ba\\\\\\\" bz\\\" qx)\"")
+    ("(|fo \"ba\\\" bz\" qx)" "(\"|fo\" \"ba\\\" bz\" qx)")
+    ("(f|o \"ba\\\" bz\" qx)" "(f \"|o\" \"ba\\\" bz\" qx)")
+    ;++ Should the space be left there after the `"'?
+    ("(fo| \"ba\\\" bz\" qx)" "(fo \"| \\\"ba\\\\\\\" bz\\\"\" qx)")
+    ("(fo |\"ba\\\" bz\" qx)" "(fo \"|\\\"ba\\\\\\\" bz\\\"\" qx)")
+    ("(fo \"|ba\\\" bz\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ("(fo \"b|a\\\" bz\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ("(fo \"ba|\\\" bz\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ("(fo \"ba\\|\" bz\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ("(fo \"ba\\\"| bz\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ("(fo \"ba\\\" |bz\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ("(fo \"ba\\\" b|z\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ("(fo \"ba\\\" bz|\" qx)" "(fo \"ba\\\" bz\"| qx)")
+    ;++ Should the space be left there after the `"'?
+    ("(fo \"ba\\\" bz\"| qx)" "(fo \"ba\\\" bz\" \"| qx\")")
+    ("(fo \"ba\\\" bz\" |qx)" "(fo \"ba\\\" bz\" \"|qx\")")
+    ("(fo \"ba\\\" bz\" q|x)" "(fo \"ba\\\" bz\" q \"|x\")")
+    ("(fo \"ba\\\" bz\" qx|)" "(fo \"ba\\\" bz\" qx \"|\")")
+    ("(fo \"ba\\\" bz\" qx)|" "(fo \"ba\\\" bz\" qx) \"|\"")
+
+    ;++ Full tests...
+    ("(foo |(bar #\\x \"baz \\\\ quux\") zot)"
+     "(foo \"|(bar #\\\\x \\\"baz \\\\\\\\ quux\\\")\" zot)")))
+
+;++ Copy tests from `paredit-meta-doublequote'...
+
+(paredit-test 'paredit-meta-doublequote-and-newline
+  '(("(foo \"bar |baz\" quux)"
+     "(foo \"bar baz\"\n     |quux)")
+    ("(foo |(bar #\\x \"baz \\\\ quux\") zot)"
+     "(foo \"|(bar #\\\\x \\\"baz \\\\\\\\ quux\\\")\" zot)")))
+
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
   nil)

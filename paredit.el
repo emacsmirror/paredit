@@ -293,7 +293,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
                  "(frob grovel)   ; full \"|lexical"))
    ("M-\""      paredit-meta-doublequote
                 ("(foo \"bar |baz\" quux)"
-                 "(foo \"bar baz\"\n     |quux)")
+                 "(foo \"bar baz\"| quux)")
                 ("(foo |(bar #\\x \"baz \\\\ quux\") zot)"
                  ,(concat "(foo \"|(bar #\\\\x \\\"baz \\\\"
                           "\\\\ quux\\\")\" zot)")))
@@ -901,21 +901,27 @@ If in a character literal, do nothing.  This prevents accidentally
          (paredit-insert-pair n ?\" ?\" 'paredit-forward-for-quote))))
 
 (defun paredit-meta-doublequote (&optional n)
-  "Move to the end of the string, insert a newline, and indent.
-If not in a string, act as `paredit-doublequote'; if no prefix argument
-  is specified and the region is not active or `transient-mark-mode' is
-  disabled, the default is to wrap one S-expression, however, not
-  zero."
+  "Move to the end of the string.
+If not in a string, act as `paredit-doublequote'; if not prefix argument
+ is specified and the region is not active or `transient-mark-mode' is
+ disabled, the default is to wrap one S-expression, however, not zero."
   (interactive "P")
   (if (not (paredit-in-string-p))
-      (paredit-doublequote (or n
-                               (and (not (paredit-region-active-p))
-                                    1)))
-    (let ((start+end (paredit-string-start+end-points)))
-      (goto-char (1+ (cdr start+end)))
-      (newline)
-      (lisp-indent-line)
-      (paredit-ignore-sexp-errors (indent-sexp)))))
+      (paredit-doublequote (or n (and (not (paredit-region-active-p)) 1)))
+      (goto-char (paredit-enclosing-string-end))))
+
+(defun paredit-meta-doublequote-and-newline (&optional n)
+  "Move to the end of the string, insert a newline, and indent.
+If not in a string, act as `paredit-doublequote'; if not prefix argument
+ is specified and the region is not active or `transient-mark-mode' is
+ disabled, the default is to wrap one S-expression, however, not zero."
+  (interactive "P")
+  (if (not (paredit-in-string-p))
+      (paredit-doublequote (or n (and (not (paredit-region-active-p)) 1)))
+      (progn (goto-char (paredit-enclosing-string-end))
+             (newline)
+             (lisp-indent-line)
+             (paredit-ignore-sexp-errors (indent-sexp)))))
 
 (defun paredit-forward-for-quote (end)
   (let ((state (paredit-current-parse-state)))
