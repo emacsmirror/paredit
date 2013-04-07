@@ -13,6 +13,14 @@ The latest version of this file is available at
 
   <http://mumble.net/~campbell/emacs/paredit.release>.
 
+** Version 24
+
+*** C-M-f/C-M-b (paredit-forward/paredit-backward) now move out of strings.
+*** Changed M-" (paredit-meta-doublequote) to not break line, like M-).
+*** New command: paredit-meta-doublequote-and-newline has old behaviour.
+*** Several commands preserve indentation and point column better.
+*** Various bug fixes.
+
 ** Version 23
 
 Paredit no longer runs in GNU Emacs 20.  It now requires 21 or later.
