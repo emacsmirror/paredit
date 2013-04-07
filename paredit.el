@@ -61,35 +61,6 @@
 ;;;
 ;;; Paredit should run in GNU Emacs 21 or later and XEmacs 21.5.28 or
 ;;; later.
-;;;
-;;; *** WARNING *** IMPORTANT *** DO NOT SUBMIT BUGS BEFORE READING ***
-;;;
-;;; If you plan to submit a bug report, where some sequence of keys in
-;;; Paredit Mode, or some sequence of paredit commands, doesn't do what
-;;; you wanted, then it is helpful to isolate an example in a very
-;;; small buffer, and it is **ABSOLUTELY**ESSENTIAL** that you supply,
-;;; along with the sequence of keys or commands,
-;;;
-;;;   (1) the version of Emacs,
-;;;   (2) the version of paredit.el[*], and
-;;;   (3) the **COMPLETE** state of the buffer used to reproduce the
-;;;       problem, including major mode, minor modes, local key
-;;;       bindings, entire contents of the buffer, leading line breaks
-;;;       or spaces, &c.
-;;;
-;;; It is often extremely difficult to reproduce problems, especially
-;;; with commands such as `paredit-kill'.  If you do not supply **ALL**
-;;; of this information, then it is highly probable that I cannot
-;;; reproduce your problem no matter how hard I try.  So, please,
-;;; include all of the above information.
-;;;
-;;; [*] If you are using a beta version of paredit, be sure that you
-;;;     are using the *latest* edition of the beta version, available
-;;;     at <http://mumble.net/~campbell/emacs/paredit-beta.el>.  If you
-;;;     are not using a beta version, then upgrade either to that or to
-;;;     the latest release version; I cannot support older versions,
-;;;     and I can't fathom any reason why you might be using them.  So
-;;;     the answer to item (2) should be either `release' or `beta'.
 
 ;;; The paredit minor mode, Paredit Mode, binds common character keys,
 ;;; such as `(', `)', `"', and `\', to commands that carefully insert
