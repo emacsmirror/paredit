@@ -13,7 +13,7 @@ The latest version of this file is available at
 
   <http://mumble.net/~campbell/emacs/paredit.release>.
 
-** Version 24
+** Version 24 (beta)
 
 *** C-M-f/C-M-b (paredit-forward/paredit-backward) now move out of strings.
 *** Changed M-" (paredit-meta-doublequote) to not break line, like M-).
