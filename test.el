@@ -234,6 +234,9 @@ Four arguments: the paredit command, the text of the buffer
     ;; `comment-search-forward' to wind up inside a character or a
     ;; string?
     ))
+
+(paredit-test 'paredit-doublequote
+  '(("\"foo \\|x bar\"" "\"foo \\x\\\"| bar\"")))
 
 (paredit-test 'paredit-forward-delete
   '(("f|oo" "f|o")

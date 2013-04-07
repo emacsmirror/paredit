@@ -875,10 +875,11 @@ If in a character literal, do nothing.  This prevents accidentally
   delimiter unintentionally."
   (interactive "P")
   (cond ((paredit-in-string-p)
-         (if (eq (cdr (paredit-string-start+end-points))
-                 (point))
-             (forward-char)             ; We're on the closing quote.
-             (insert ?\\ ?\" )))
+         (if (eq (point) (- (paredit-enclosing-string-end) 1))
+             (forward-char)             ; Just move past the closing quote.
+           ;; Don't split a \x into an escaped backslash and a string end.
+           (if (paredit-in-string-escape-p) (forward-char))
+           (insert ?\\ ?\" )))
         ((paredit-in-comment-p)
          (insert ?\" ))
         ((not (paredit-in-char-p))
