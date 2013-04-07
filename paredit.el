@@ -1755,22 +1755,41 @@ With a prefix argument, skip the balance check."
 If there are no more S-expressions in this one before the closing
   delimiter, move past that closing delimiter; otherwise, move forward
   past the S-expression following the point."
-  (paredit-handle-sexp-errors
-      (forward-sexp)
-    ;; Use `up-list' if outside a string in case there is whitespace
-    ;; between the point and the end of the list.
-    (if (paredit-in-string-p) (forward-char) (up-list))))
+  (cond ((paredit-in-string-p)
+         (let ((end (paredit-enclosing-string-end)))
+           ;; `forward-sexp' and `up-list' may move into the next string
+           ;; in the buffer.  Don't do that; move out of the current one.
+           (if (paredit-handle-sexp-errors
+                   (progn (paredit-handle-sexp-errors (forward-sexp)
+                            (up-list))
+                          (<= end (point)))
+                 t)
+               (goto-char end))))
+        ((paredit-in-char-p)
+         (forward-char))
+        (t
+         (paredit-handle-sexp-errors (forward-sexp)
+           (up-list)))))
 
 (defun-saving-mark paredit-backward ()
   "Move backward an S-expression, or up an S-expression backward.
 If there are no more S-expressions in this one before the opening
   delimiter, move past that opening delimiter backward; otherwise, move
   move backward past the S-expression preceding the point."
-  (paredit-handle-sexp-errors
-      (backward-sexp)
-    ;; Use `backward-up-list' if outside a string in case there is
-    ;; whitespace between the point and the beginning of the list.
-    (if (paredit-in-string-p) (backward-char) (backward-up-list))))
+  (cond ((paredit-in-string-p)
+         (let ((start (paredit-enclosing-string-start)))
+           (if (paredit-handle-sexp-errors
+                   (progn (paredit-handle-sexp-errors (backward-sexp)
+                            (backward-up-list))
+                          (<= (point) start))
+                 t)
+               (goto-char start))))
+        ((paredit-in-char-p)
+         ;++ Corner case: a buffer of `\|x'.  What to do?
+         (backward-char 2))
+        (t
+         (paredit-handle-sexp-errors (backward-sexp)
+           (backward-up-list)))))
 
 ;;; Why is this not in lisp.el?
 
