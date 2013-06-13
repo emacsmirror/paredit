@@ -1055,29 +1055,37 @@ If a list begins on the line after the point but ends on a different
           (insert (make-string (or n 1) ?\; ))))))
 
 (defun paredit-semicolon-find-line-break-point ()
-  (let ((line-break-point nil)
-        (eol (point-at-eol)))
-    (and (not (eolp))                   ;Implies (not (eobp)).
+  (and (not (eolp))                   ;Implies (not (eobp)).
+       (let ((eol (point-at-eol)))
          (save-excursion
-           (paredit-handle-sexp-errors
-               (progn
-                 (while
-                     (progn
-                       (setq line-break-point (point))
-                       (forward-sexp)
-                       (and (eq eol (point-at-eol))
-                            (not (eobp)))))
-                 (backward-sexp)
-                 (and (eq eol (point-at-eol))
-                      ;; Don't break the line if the end of the last
-                      ;; S-expression is at the end of the buffer.
-                      (progn (forward-sexp) (not (eobp)))))
-             ;; If we hit the end of an expression, but the closing
-             ;; delimiter is on another line, don't break the line.
-             (save-excursion
-               (paredit-skip-whitespace t (point-at-eol))
-               (not (or (eolp) (eq (char-after) ?\; ))))))
-         line-break-point)))
+           (catch 'exit
+             (while t
+               (let ((line-break-point (point)))
+                 (cond ((paredit-handle-sexp-errors (progn (forward-sexp) t)
+                          nil)
+                        ;; Successfully advanced by an S-expression.
+                        ;; If that S-expression started on this line
+                        ;; and ended on another one, break here.
+                        (cond ((not (eq eol (point-at-eol)))
+                               (throw 'exit
+                                      (and (save-excursion
+                                             (backward-sexp)
+                                             (eq eol (point-at-eol)))
+                                           line-break-point)))
+                              ((eobp)
+                               (throw 'exit nil))))
+                       ((save-excursion
+                          (paredit-skip-whitespace t (point-at-eol))
+                          (or (eolp) (eobp) (eq (char-after) ?\;)))
+                        ;; Can't move further, but there's no closing
+                        ;; delimiter we're about to clobber -- either
+                        ;; it's on the next line or we're at the end of
+                        ;; the buffer.  Don't break the line.
+                        (throw 'exit nil))
+                       (t
+                        ;; Can't move because we hit a delimiter at the
+                        ;; end of this line.  Break here.
+                        (throw 'exit line-break-point))))))))))
 
 (defun paredit-semicolon-with-line-break (line-break-point n)
   (let ((line-break-marker (make-marker)))
