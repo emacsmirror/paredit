@@ -1775,20 +1775,37 @@ With a prefix argument, skip the balance check."
 ;;;; Point Motion
 
 (eval-and-compile
-  (defmacro defun-saving-mark (name bvl doc &rest body)
+  (defmacro defun-motion (name bvl doc &rest body)
     `(defun ,name ,bvl
        ,doc
        ,(xcond ((paredit-xemacs-p)
                 '(interactive "_"))
                ((paredit-gnu-emacs-p)
-                '(interactive)))
+                ;++ Not sure this is sufficient for the `^'.
+                (if (fboundp 'handle-shift-selection)
+                    '(interactive "^p")
+                    '(interactive "p"))))
        ,@body)))
 
-(defun-saving-mark paredit-forward ()
+(defun-motion paredit-forward (&optional arg)
   "Move forward an S-expression, or up an S-expression forward.
 If there are no more S-expressions in this one before the closing
   delimiter, move past that closing delimiter; otherwise, move forward
   past the S-expression following the point."
+  (let ((n (or arg 1)))
+    (cond ((< 0 n) (dotimes (i n)       (paredit-move-forward)))
+          ((< n 0) (dotimes (i (- n))   (paredit-move-backward))))))
+
+(defun-motion paredit-backward (&optional arg)
+  "Move backward an S-expression, or up an S-expression backward.
+If there are no more S-expressions in this one before the opening
+  delimiter, move past that opening delimiter backward; otherwise, move
+  move backward past the S-expression preceding the point."
+  (let ((n (or arg 1)))
+    (cond ((< 0 n) (dotimes (i n)       (paredit-move-backward)))
+          ((< n 0) (dotimes (i (- n))   (paredit-move-forward))))))
+
+(defun paredit-move-forward ()
   (cond ((paredit-in-string-p)
          (let ((end (paredit-enclosing-string-end)))
            ;; `forward-sexp' and `up-list' may move into the next string
@@ -1805,11 +1822,7 @@ If there are no more S-expressions in this one before the closing
          (paredit-handle-sexp-errors (forward-sexp)
            (up-list)))))
 
-(defun-saving-mark paredit-backward ()
-  "Move backward an S-expression, or up an S-expression backward.
-If there are no more S-expressions in this one before the opening
-  delimiter, move past that opening delimiter backward; otherwise, move
-  move backward past the S-expression preceding the point."
+(defun paredit-move-backward ()
   (cond ((paredit-in-string-p)
          (let ((start (paredit-enclosing-string-start)))
            (if (paredit-handle-sexp-errors
@@ -1824,15 +1837,6 @@ If there are no more S-expressions in this one before the opening
         (t
          (paredit-handle-sexp-errors (backward-sexp)
            (backward-up-list)))))
-
-;;; Why is this not in lisp.el?
-
-(defun backward-down-list (&optional arg)
-  "Move backward and descend into one level of parentheses.
-With ARG, do this that many times.
-A negative argument means move forward but still descend a level."
-  (interactive "p")
-  (down-list (- (or arg 1))))
 
 ;;;; Window Positioning
 
@@ -1942,34 +1946,30 @@ With a prefix argument N, encompass all N S-expressions forward."
                     (throw 'exit (+ (point) horizontal-direction)))))))
       nil)))
 
-(defun paredit-forward-down (&optional argument)
+(defun-motion paredit-forward-down (&optional argument)
   "Move forward down into a list.
 With a positive argument, move forward down that many levels.
 With a negative argument, move backward down that many levels."
-  (interactive "p")
   (paredit-up/down (or argument +1) -1))
 
-(defun paredit-backward-up (&optional argument)
+(defun-motion paredit-backward-up (&optional argument)
   "Move backward up out of the enclosing list.
 With a positive argument, move backward up that many levels.
 With a negative argument, move forward up that many levels.
 If in a string initially, that counts as one level."
-  (interactive "p")
   (paredit-up/down (- 0 (or argument +1)) +1))
 
-(defun paredit-forward-up (&optional argument)
+(defun-motion paredit-forward-up (&optional argument)
   "Move forward up out of the enclosing list.
 With a positive argument, move forward up that many levels.
 With a negative argument, move backward up that many levels.
 If in a string initially, that counts as one level."
-  (interactive "p")
   (paredit-up/down (or argument +1) +1))
 
-(defun paredit-backward-down (&optional argument)
+(defun-motion paredit-backward-down (&optional argument)
   "Move backward down into a list.
 With a positive argument, move backward down that many levels.
 With a negative argument, move forward down that many levels."
-  (interactive "p")
   (paredit-up/down (- 0 (or argument +1)) -1))
 
 ;;;; Depth-Changing Commands:  Wrapping, Splicing, & Raising
