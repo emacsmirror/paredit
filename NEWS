@@ -19,6 +19,7 @@ The latest version of this file is available at
 *** Changed M-" (paredit-meta-doublequote) to not break line, like M-).
 *** New command: paredit-meta-doublequote-and-newline has old behaviour.
 *** Several commands preserve indentation and point column better.
+*** Motion commands support shift selection in GNU Emacs 24 and later.
 *** `backward-delete-char' changes in GNU Emacs 24 no longer botch paredit.
 *** Various bug fixes.
 
