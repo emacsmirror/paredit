@@ -42,10 +42,10 @@ Four arguments: the paredit command, the text of the buffer
           (insert before)
           (goto-char (point-min))
           (if (search-forward "_" nil t)
-              (progn (backward-delete-char +1) (set-mark (point))))
+              (progn (delete-char -1) (set-mark (point))))
           (goto-char (point-min))
           (search-forward "|")
-          (backward-delete-char +1)
+          (delete-char -1)
           (if (cond ((eq expected 'error)
                      ;++ Check that there are no more expected states.
                      (condition-case condition
