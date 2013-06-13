@@ -2,7 +2,9 @@
 
 set -eu
 
-exec emacs --batch --eval '(progn
+: ${EMACS:=emacs}
+
+exec ${EMACS} --batch --eval '(progn
   (byte-compile-file "paredit.el" t)
   (byte-compile-file "test.el" t)
 )'
