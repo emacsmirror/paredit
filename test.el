@@ -1223,6 +1223,7 @@ Four arguments: the paredit command, the text of the buffer
     ("(let ((x 0)) (progn| ))" "(progn |(let ((x 0)) ))")
     ("(let ((x 0)) (progn|))" "(progn |(let ((x 0)) ))")
     ;; One space should definitely be left between A and B here.
+    ("(let ((x 0)) a(progn|)b)" "(progn |(let ((x 0)) a b))")
     ("(let ((x 0)) a (progn|) b)" "(progn |(let ((x 0)) a b))")
     ("(let ((x 0)) a (progn| ) b)" "(progn |(let ((x 0)) a b))")
     ("(let ((x 0)) a (progn |) b)" "(progn |(let ((x 0)) a b))")))
