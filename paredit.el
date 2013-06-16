@@ -1015,21 +1015,11 @@ If the point is in a string or a comment, fill the paragraph instead,
   (if (or (paredit-in-string-p)
           (paredit-in-comment-p))
       (lisp-fill-paragraph argument)
-    (let ((column (current-column))
-          (indentation (paredit-current-indentation)))
-      (save-excursion (end-of-defun) (beginning-of-defun) (indent-sexp))
-      ;; Preserve the point's position either in the indentation or in
-      ;; the code: if on code, move with the code; if in indentation,
-      ;; leave it in the indentation, either where it was (if that's
-      ;; still indentation) or at the end of the indentation (if the
-      ;; code moved far enough left).
-      (let ((indentation* (paredit-current-indentation)))
-        (goto-char
-         (+ (point-at-bol)
-            (cond ((not (< column indentation))
-                   (+ column (- indentation* indentation)))
-                  ((<= indentation* column) indentation*)
-                  (t column))))))))
+    (paredit-preserving-column
+      (save-excursion
+        (end-of-defun)
+        (beginning-of-defun)
+        (indent-sexp)))))
 
 ;;;; Comment Insertion
 
