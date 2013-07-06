@@ -2254,31 +2254,50 @@ If in a string, move the opening double-quote forward by one
            (paredit-forward-slurp-into-list)))))
 
 (defun paredit-forward-slurp-into-list ()
-  (up-list)                             ; Up to the end of the list to
-  (let ((close (char-before)))          ;   save and delete the closing
-    (delete-char -1)                    ;   delimiter.
-    (let ((start (point)))
-      (catch 'return                    ; Go to the end of the desired
-        (while t                        ;   S-expression, going up a
-          (paredit-handle-sexp-errors   ;   list if it's not in this,
-              (progn (forward-sexp) (throw 'return nil))
-            (up-list)
-            (setq close                 ; adjusting for mixed
-                  (prog1 (char-before)  ;   delimiters as necessary,
-                    (delete-char -1)
-                    (insert close))))))
-      (insert close)                    ; to insert that delimiter.
-      (indent-region start (point) nil))))
-
+  (let ((nestedp nil))
+    (save-excursion
+      (up-list)                            ; Up to the end of the list to
+      (let ((close (char-before)))         ;   save and delete the closing
+        (delete-char -1)                   ;   delimiter.
+        (let ((start (point)))
+          (catch 'return                   ; Go to the end of the desired
+            (while t                       ;   S-expression, going up a
+              (paredit-handle-sexp-errors  ;   list if it's not in this,
+                  (progn (forward-sexp) (throw 'return nil))
+                (setq nestedp t)
+                (up-list)
+                (setq close                ; adjusting for mixed
+                      (prog1 (char-before) ;   delimiters as necessary,
+                        (delete-char -1)
+                        (insert close))))))
+          (insert close)                   ;  to insert that delimiter.
+          (indent-region start (point) nil))))
+    (if (and (not nestedp)
+             (eq (save-excursion (paredit-skip-whitespace nil) (point))
+                 (save-excursion (backward-up-list) (forward-char) (point)))
+             (eq (save-excursion (forward-sexp) (backward-sexp) (point))
+                 (save-excursion (paredit-skip-whitespace t) (point))))
+        (delete-region (save-excursion (paredit-skip-whitespace nil) (point))
+                       (save-excursion (paredit-skip-whitespace t) (point))))))
+
 (defun paredit-forward-slurp-into-string ()
-  (goto-char (1+ (cdr (paredit-string-start+end-points))))
-  ;; Signal any errors that we might get first, before mucking with the
-  ;; buffer's contents.
-  (save-excursion (forward-sexp))
-  (let ((close (char-before)))
-    (delete-char -1)
-    (paredit-forward-for-quote (save-excursion (forward-sexp) (point)))
-    (insert close)))
+  (let ((start (paredit-enclosing-string-start))
+        (end (paredit-enclosing-string-end)))
+    (goto-char end)
+    ;; Signal any errors that we might get first, before mucking with
+    ;; the buffer's contents.
+    (save-excursion (forward-sexp))
+    (let ((close (char-before)))
+      ;; Skip intervening whitespace if we're slurping into an empty
+      ;; string.  XXX What about nonempty strings?
+      (if (and (= (+ start 2) end)
+               (eq (save-excursion (paredit-skip-whitespace t) (point))
+                   (save-excursion (forward-sexp) (backward-sexp) (point))))
+          (delete-region (- (point) 1)
+                         (save-excursion (paredit-skip-whitespace t) (point)))
+          (delete-char -1))
+      (paredit-forward-for-quote (save-excursion (forward-sexp) (point)))
+      (insert close))))
 
 (defun paredit-forward-barf-sexp ()
   "Remove the last S-expression in the current list from that list
@@ -2321,35 +2340,56 @@ If in a string, move the opening double-quote backward by one
            (paredit-backward-slurp-into-list)))))
 
 (defun paredit-backward-slurp-into-list ()
-  (backward-up-list)
-  (let ((open (char-after)))
-    (delete-char +1)
-    (catch 'return
-      (while t
-        (paredit-handle-sexp-errors
-            (progn (backward-sexp) (throw 'return nil))
-          (backward-up-list)
-          (setq open
-                (prog1 (char-after)
-                  (save-excursion (insert open) (delete-char +1)))))))
-    (insert open))
-  ;; Reindent the line at the beginning of wherever we inserted the
-  ;; opening delimiter, and then indent the whole S-expression.
-  (backward-up-list)
-  (lisp-indent-line)
-  (indent-sexp))
-
+  (let ((nestedp nil))
+    (save-excursion
+      (backward-up-list)
+      (let ((open (char-after)))
+        (delete-char +1)
+        (catch 'return
+          (while t
+            (paredit-handle-sexp-errors
+                (progn (backward-sexp) (throw 'return nil))
+              (setq nestedp t)
+              (backward-up-list)
+              (setq open
+                    (prog1 (char-after)
+                      (save-excursion (insert open) (delete-char +1)))))))
+        (insert open))
+      ;; Reindent the line at the beginning of wherever we inserted the
+      ;; opening delimiter, and then indent the whole S-expression.
+      (backward-up-list)
+      (lisp-indent-line)
+      (indent-sexp))
+    ;; If we slurped into an empty list, don't leave dangling space:
+    ;; (foo |).
+    (if (and (not nestedp)
+             (eq (save-excursion (paredit-skip-whitespace nil) (point))
+                 (save-excursion (backward-sexp) (forward-sexp) (point)))
+             (eq (save-excursion (up-list) (backward-char) (point))
+                 (save-excursion (paredit-skip-whitespace t) (point))))
+        (delete-region (save-excursion (paredit-skip-whitespace nil) (point))
+                       (save-excursion (paredit-skip-whitespace t) (point))))))
+
 (defun paredit-backward-slurp-into-string ()
-  (goto-char (car (paredit-string-start+end-points)))
-  ;; Signal any errors that we might get first, before mucking with the
-  ;; buffer's contents.
-  (save-excursion (backward-sexp))
-  (let ((open (char-after))
-        (target (point)))
-    (delete-char +1)
-    (backward-sexp)
-    (insert open)
-    (paredit-forward-for-quote target)))
+  (let ((start (paredit-enclosing-string-start))
+        (end (paredit-enclosing-string-end)))
+    (goto-char start)
+    ;; Signal any errors that we might get first, before mucking with
+    ;; the buffer's contents.
+    (save-excursion (backward-sexp))
+    (let ((open (char-after))
+          (target (point)))
+      ;; Skip intervening whitespace if we're slurping into an empty
+      ;; string.  XXX What about nonempty strings?
+      (if (and (= (+ start 2) end)
+               (eq (save-excursion (paredit-skip-whitespace nil) (point))
+                   (save-excursion (backward-sexp) (forward-sexp) (point))))
+          (delete-region (save-excursion (paredit-skip-whitespace nil) (point))
+                         (+ (point) 1))
+          (delete-char +1))
+      (backward-sexp)
+      (insert open)
+      (paredit-forward-for-quote target))))
 
 (defun paredit-backward-barf-sexp ()
   "Remove the first S-expression in the current list from that list
