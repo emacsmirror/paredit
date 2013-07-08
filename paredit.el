@@ -2521,7 +2521,7 @@ Both must be lists, strings, or atoms; error if there is a mismatch."
   (interactive)
   (paredit-lose-if-not-in-sexp 'paredit-add-to-previous-list)
   (save-excursion
-    (backward-down-list)
+    (down-list -1)                      ;++ backward-down-list...
     (paredit-forward-slurp-sexp)))
 
 (defun paredit-add-to-next-list ()
