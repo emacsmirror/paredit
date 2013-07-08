@@ -2425,16 +2425,16 @@ Automatically reindent the barfed S-expression and the form from which
         ((or (paredit-in-comment-p)
              (paredit-in-char-p))
          (error "Invalid context for splitting S-expression."))
-        (t (let ((open  (save-excursion (backward-up-list)
-                                        (char-after)))
-                 (close (save-excursion (up-list)
-                                        (char-before))))
-             (delete-horizontal-space)
-             (insert close)
-             (save-excursion (insert ?\ )
-                             (insert open)
-                             (backward-char)
-                             (indent-sexp))))))
+        (t
+         (let ((open (save-excursion (backward-up-list) (char-after)))
+               (close (save-excursion (up-list) (char-before))))
+           (delete-horizontal-space)
+           (insert close)
+           (save-excursion
+             (insert ?\ )
+             (insert open)
+             (backward-char)
+             (indent-sexp))))))
 
 (defun paredit-join-sexps ()
   "Join the S-expressions adjacent on either side of the point.
