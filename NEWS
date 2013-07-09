@@ -17,6 +17,7 @@ The latest version of this file is available at
 
 *** Slurp/barf now support prefix arguments with the obvious semantics.
 *** HTML quick reference is a little prettier now, perhaps.
+*** paredit.el no longer defines `backward-down-list'.
 *** C-M-f/C-M-b (paredit-forward/paredit-backward) now move out of strings.
 *** Changed M-" (paredit-meta-doublequote) to not break line, like M-).
 *** New command: paredit-meta-doublequote-and-newline has old behaviour.
