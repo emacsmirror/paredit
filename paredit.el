@@ -2230,8 +2230,7 @@ If in a string, move the opening double-quote forward by one
   without altering any indentation or formatting."
   (interactive)
   (save-excursion
-    (cond ((or (paredit-in-comment-p)
-               (paredit-in-char-p))
+    (cond ((paredit-in-comment-p)
            (error "Invalid context for slurping S-expressions."))
           ((paredit-in-string-p)
            (paredit-forward-slurp-into-string))
@@ -2316,8 +2315,7 @@ If in a string, move the opening double-quote backward by one
   without altering any indentation or formatting."
   (interactive)
   (save-excursion
-    (cond ((or (paredit-in-comment-p)
-               (paredit-in-char-p))
+    (cond ((paredit-in-comment-p)
            (error "Invalid context for slurping S-expressions."))
           ((paredit-in-string-p)
            (paredit-backward-slurp-into-string))
