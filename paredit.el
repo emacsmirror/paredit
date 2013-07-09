@@ -2233,7 +2233,16 @@ If in a string, move the opening double-quote forward by one
     (cond ((paredit-in-comment-p)
            (error "Invalid context for slurping S-expressions."))
           ((paredit-in-string-p)
-           (paredit-forward-slurp-into-string))
+           ;; If there is anything to slurp into the string, take that.
+           ;; Otherwise, try to slurp into the enclosing list.
+           (if (save-excursion
+                 (goto-char (paredit-enclosing-string-end))
+                 (paredit-handle-sexp-errors (progn (forward-sexp) nil)
+                   t))
+               (progn
+                 (goto-char (paredit-enclosing-string-end))
+                 (paredit-forward-slurp-into-list))
+               (paredit-forward-slurp-into-string)))
           (t
            (paredit-forward-slurp-into-list)))))
 
@@ -2318,7 +2327,16 @@ If in a string, move the opening double-quote backward by one
     (cond ((paredit-in-comment-p)
            (error "Invalid context for slurping S-expressions."))
           ((paredit-in-string-p)
-           (paredit-backward-slurp-into-string))
+           ;; If there is anything to slurp into the string, take that.
+           ;; Otherwise, try to slurp into the enclosing list.
+           (if (save-excursion
+                 (goto-char (paredit-enclosing-string-start))
+                 (paredit-handle-sexp-errors (progn (backward-sexp) nil)
+                   t))
+               (progn
+                 (goto-char (paredit-enclosing-string-start))
+                 (paredit-backward-slurp-into-list))
+               (paredit-backward-slurp-into-string)))
           (t
            (paredit-backward-slurp-into-list)))))
 
