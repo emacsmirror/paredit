@@ -534,50 +534,28 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
   "Insert HTML for a paredit quick reference table."
   (interactive)
   (let ((insert-lines
-         (lambda (&rest lines)
-           (mapc (lambda (line) (insert line) (newline))
-                 lines)))
-        (html-keys
-         (lambda (keys)
-           (mapconcat 'paredit-html-quote keys ", ")))
-        (html-example
-         (lambda (example)
-           (concat "<table><tr><td><pre>"
-                   (mapconcat 'paredit-html-quote
-                              example
-                              (concat "</pre></td></tr><tr><td>"
-                                      "&nbsp;&nbsp;&nbsp;&nbsp;---&gt;"
-                                      "</td></tr><tr><td><pre>"))
-                   "</pre></td></tr></table>")))
-        (firstp t))
+         (lambda (&rest lines) (dolist (line lines) (insert line) (newline)))))
     (paredit-do-commands (spec keys fn examples)
-        (progn (if (not firstp)
-                   (insert "</table>\n")
-                   (setq firstp nil))
-               (funcall insert-lines
-                        (concat "<h3>" spec "</h3>")
-                        "<table border=\"1\" cellpadding=\"1\">"
-                        "  <tr>"
-                        "    <th>Command</th>"
-                        "    <th>Keys</th>"
-                        "    <th>Examples</th>"
-                        "  </tr>"))
+        (funcall insert-lines (concat "<h3>" spec "</h3>"))
       (let ((name (symbol-name fn)))
-        (if (string-match (symbol-name 'paredit-) name)
-            (funcall insert-lines
-                     "  <tr>"
-                     (concat "    <td><tt>" name "</tt></td>")
-                     (concat "    <td align=\"center\">"
-                             (funcall html-keys keys)
-                             "</td>")
-                     (concat "    <td>"
-                             (if examples
-                                 (mapconcat html-example examples
-                                            "<hr>")
-                                 "(no examples)")
-                             "</td>")
-                     "  </tr>")))))
-  (insert "</table>\n"))
+        (funcall insert-lines (concat "<h4>" name "</h4>"))
+        (funcall insert-lines
+                 "<p>Keys: "
+                 (mapconcat (lambda (key)
+                              (concat "<tt>" (paredit-html-quote key) "</tt>"))
+                            keys
+                            ", ")
+                 "</p>")
+        (funcall insert-lines "<table cellpadding=\"10\">")
+        (dolist (example examples)
+          (let ((prefix "<tr><td><pre>")
+                (examples
+                 (mapconcat 'paredit-html-quote
+                            example
+                            (concat "</pre></td><td>&rarr;</td><td><pre>")))
+                (suffix "</pre></td></tr>"))
+            (funcall insert-lines (concat prefix examples suffix))))
+        (funcall insert-lines "</table>")))))
 
 (defun paredit-html-quote (string)
   (with-temp-buffer
