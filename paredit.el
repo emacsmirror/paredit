@@ -44,8 +44,8 @@
 ;;;     "Turn on pseudo-structural editing of Lisp code."
 ;;;     t)
 ;;;
-;;; Start Paredit Mode on the fly with `M-x paredit-mode RET', or
-;;; always enable it in a major mode `M' (e.g., `lisp') with:
+;;; Start Paredit Mode on the fly with `M-x enable-paredit-mode RET',
+;;; or always enable it in a major mode `M' (e.g., `lisp') with:
 ;;;
 ;;;   (add-hook M-mode-hook 'enable-paredit-mode)
 ;;;
