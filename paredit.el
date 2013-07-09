@@ -534,19 +534,26 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
   "Insert HTML for a paredit quick reference table."
   (interactive)
   (let ((insert-lines
-         (lambda (&rest lines) (dolist (line lines) (insert line) (newline)))))
+         (lambda (&rest lines) (dolist (line lines) (insert line) (newline))))
+        (initp nil))
     (paredit-do-commands (spec keys fn examples)
-        (funcall insert-lines (concat "<h3>" spec "</h3>"))
-      (let ((name (symbol-name fn)))
-        (funcall insert-lines (concat "<h4>" name "</h4>"))
+        (progn (if initp
+                   (funcall insert-lines "</table>")
+                   (setq initp t))
+               (funcall insert-lines (concat "<h3>" spec "</h3>"))
+               (funcall insert-lines "<table>"))
+      (let ((name (symbol-name fn))
+            (keys
+             (mapconcat (lambda (key)
+                          (concat "<tt>" (paredit-html-quote key) "</tt>"))
+                        keys
+                        ", ")))
+        (funcall insert-lines "<tr>")
+        (funcall insert-lines (concat "  <th>" name "</th>"))
+        (funcall insert-lines (concat "  <th>" keys "</th>"))
+        (funcall insert-lines "</tr>")
         (funcall insert-lines
-                 "<p>Keys: "
-                 (mapconcat (lambda (key)
-                              (concat "<tt>" (paredit-html-quote key) "</tt>"))
-                            keys
-                            ", ")
-                 "</p>")
-        (funcall insert-lines "<table cellpadding=\"10\">")
+                 "<tr><td colspan=\"2\"><table cellpadding=\"10\">")
         (dolist (example examples)
           (let ((prefix "<tr><td><pre>")
                 (examples
@@ -555,7 +562,8 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
                             (concat "</pre></td><td>&rarr;</td><td><pre>")))
                 (suffix "</pre></td></tr>"))
             (funcall insert-lines (concat prefix examples suffix))))
-        (funcall insert-lines "</table>")))))
+        (funcall insert-lines "</table></td></tr>")))
+    (funcall insert-lines "</table>")))
 
 (defun paredit-html-quote (string)
   (with-temp-buffer
