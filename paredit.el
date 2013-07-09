@@ -2333,8 +2333,8 @@ Automatically reindent the newly barfed S-expression with respect to
                   (backward-sexp))))
           (paredit-skip-whitespace nil) ; Skip leading whitespace.
           (cond ((bobp)
-                 ;++ This will have deleted the close.  But there is no
-                 ;++ open.  Is that OK?
+                 ;++ We'll have deleted the close, but there's no open.
+                 ;++ Is that OK?
                  (error "Barfing all subexpressions with no open-paren?"))
                 ((paredit-in-comment-p) ; Don't put the close-paren in
                  (newline)))            ;   a comment.
@@ -2473,6 +2473,8 @@ Automatically reindent the barfed S-expression and the form from which
           (while (progn (paredit-skip-whitespace t) (eq (char-after) ?\; ))
             (forward-line 1))
           (if (eobp)
+              ;++ We'll have deleted the close, but there's no open.
+              ;++ Is that OK?
               (error "Barfing all subexpressions with no close-paren?"))
           ;** Don't use `insert' here.  Consider, e.g., barfing from
           ;**   (foo|)
