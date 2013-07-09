@@ -15,6 +15,7 @@ The latest version of this file is available at
 
 ** Version 24 (beta)
 
+*** Slurp/barf now support prefix arguments with the obvious semantics.
 *** C-M-f/C-M-b (paredit-forward/paredit-backward) now move out of strings.
 *** Changed M-" (paredit-meta-doublequote) to not break line, like M-).
 *** New command: paredit-meta-doublequote-and-newline has old behaviour.

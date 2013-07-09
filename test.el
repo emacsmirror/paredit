@@ -1337,6 +1337,46 @@ Four arguments: the paredit command, the text of the buffer
     ("x (\"y\"|)" "(x \"y\"|)")
     ("x (\"y\")|" error)))
 
+(let ((current-prefix-arg 2))
+  (paredit-test 'paredit-forward-slurp-sexp
+    '(("(foo|) bar baz" "(foo| bar baz)")))
+  (paredit-test 'paredit-backward-slurp-sexp
+    '(("foo bar (|baz)" "(foo bar |baz)")))
+  (paredit-test 'paredit-forward-barf-sexp
+    '(("(foo| bar baz)" "(foo|) bar baz")
+      ("(foo |bar baz)" "(foo) |bar baz")))
+  (paredit-test 'paredit-backward-barf-sexp
+    '(("(foo bar| baz)" "foo bar| (baz)")
+      ("(foo bar |baz)" "foo bar (|baz)"))))
+
+(let ((current-prefix-arg -2))
+  (paredit-test 'paredit-forward-slurp-sexp
+    '(("(foo| bar baz)" "(foo|) bar baz")
+      ("(foo |bar baz)" "(foo) |bar baz")))
+  (paredit-test 'paredit-backward-slurp-sexp
+    '(("(foo bar| baz)" "foo bar| (baz)")
+      ("(foo bar |baz)" "foo bar (|baz)")))
+  (paredit-test 'paredit-forward-barf-sexp
+    '(("(foo|) bar baz" "(foo| bar baz)")))
+  (paredit-test 'paredit-backward-barf-sexp
+    '(("foo bar (|baz)" "(foo bar |baz)"))))
+
+(let ((current-prefix-arg '(4)))
+  (paredit-test 'paredit-forward-slurp-sexp
+    '(("(foo|) bar baz" "(foo| bar baz)")
+      ("(foo| bar) baz" "(foo| bar baz)")))
+  (paredit-test 'paredit-backward-slurp-sexp
+    '(("foo bar (|baz)" "(foo bar |baz)")
+      ("foo (bar |baz)" "(foo bar |baz)")))
+  (paredit-test 'paredit-forward-barf-sexp
+    '(("(foo| bar baz)" "(foo|) bar baz")
+      ("(foo |bar baz)" "(foo) |bar baz")
+      ("(foo b|ar baz)" "(foo b|ar) baz")))
+  (paredit-test 'paredit-backward-barf-sexp
+    '(("(foo ba|r baz)" "foo (ba|r baz)")
+      ("(foo bar| baz)" "foo bar| (baz)")
+      ("(foo bar |baz)" "foo bar (|baz)"))))
+
 (defun paredit-canary-indent-method (state indent-point normal-indent)
   (check-parens)
   nil)
