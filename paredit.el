@@ -549,20 +549,22 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
                         keys
                         ", ")))
         (funcall insert-lines "<tr>")
-        (funcall insert-lines (concat "  <th>" name "</th>"))
-        (funcall insert-lines (concat "  <th>" keys "</th>"))
+        (funcall insert-lines (concat "  <th align=\"left\">" keys "</th>"))
+        (funcall insert-lines (concat "  <th align=\"left\">" name "</th>"))
         (funcall insert-lines "</tr>")
         (funcall insert-lines
-                 "<tr><td colspan=\"2\"><table cellpadding=\"10\">")
+                 "<tr><td colspan=\"2\"><table cellpadding=\"5\"><tr>")
         (dolist (example examples)
-          (let ((prefix "<tr><td><pre>")
+          (let ((prefix "<td><table border=\"1\"><tr><td><table><tr><td><pre>")
                 (examples
                  (mapconcat 'paredit-html-quote
                             example
-                            (concat "</pre></td><td>&rarr;</td><td><pre>")))
-                (suffix "</pre></td></tr>"))
+                            (concat "</pre></td></tr>"
+                                    "<tr><th>&darr;</th></tr>"
+                                    "<tr><td><pre>")))
+                (suffix "</pre></td></tr></table></td></tr></table></td>"))
             (funcall insert-lines (concat prefix examples suffix))))
-        (funcall insert-lines "</table></td></tr>")))
+        (funcall insert-lines "</tr></table></td></tr>")))
     (funcall insert-lines "</table>")))
 
 (defun paredit-html-quote (string)
