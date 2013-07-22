@@ -222,6 +222,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
 (defun paredit-override-check-parens-interactively (condition)
   (y-or-n-p (format "Enable Paredit Mode despite condition %S? " condition)))
 
+;;;###autoload
 (defun enable-paredit-mode ()
   "Turn on pseudo-structural editing of Lisp code."
   (interactive)
