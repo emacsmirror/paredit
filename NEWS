@@ -13,7 +13,7 @@ The latest version of this file is available at
 
   <http://mumble.net/~campbell/emacs/paredit.release>.
 
-** Version 24 (beta)
+** Version 24
 
 *** Slurp/barf now support prefix arguments with the obvious semantics.
 *** HTML quick reference is a little prettier now, perhaps.
