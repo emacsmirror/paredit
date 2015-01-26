@@ -47,7 +47,7 @@
 ;;; Start Paredit Mode on the fly with `M-x enable-paredit-mode RET',
 ;;; or always enable it in a major mode `M' (e.g., `lisp') with:
 ;;;
-;;;   (add-hook M-mode-hook 'enable-paredit-mode)
+;;;   (add-hook 'M-mode-hook 'enable-paredit-mode)
 ;;;
 ;;; Customize paredit using `eval-after-load':
 ;;;
