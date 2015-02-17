@@ -192,6 +192,9 @@ If point was on indentation, it stays in indentation."
 
 ;;;; Minor Mode Definition
 
+(defvar paredit-lighter " Paredit"
+  "Mode line lighter Paredit Mode.")
+
 (defvar paredit-mode-map (make-sparse-keymap)
   "Keymap for the paredit minor mode.")
 
@@ -208,7 +211,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
   caution when forcing Paredit Mode to be enabled, and consider
   fixing unbalanced parentheses instead.
 \\<paredit-mode-map>"
-  :lighter " Paredit"
+  :lighter paredit-lighter
   ;; Setting `paredit-mode' to false here aborts enabling Paredit Mode.
   (if (and paredit-mode
            (not current-prefix-arg))
