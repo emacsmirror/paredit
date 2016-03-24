@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2005--2016 Taylor R. Campbell
 
-;; Author: Taylor R. Campbell
+;; Author: Taylor R. Campbell <campbell+paredit@mumble.net>
 ;; Version: 25beta
 ;; Created: 2005-07-31
 ;; Keywords: lisp
