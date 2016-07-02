@@ -396,6 +396,9 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
    ("M-("       paredit-wrap-round
                 ("(foo |bar baz)"
                  "(foo (|bar) baz)"))
+   ("M-["       paredit-wrap-square
+                ("(foo |bar baz)"
+                 "(foo [|bar] baz)"))
    ("M-s"       paredit-splice-sexp
                 ("(foo (bar| baz) quux)"
                  "(foo bar| baz quux)"))
