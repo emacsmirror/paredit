@@ -2517,8 +2517,8 @@ Automatically reindent the barfed S-expression and the form from which
              (paredit-in-char-p))
          (error "Invalid context for splitting S-expression."))
         (t
-         (let ((open (save-excursion (backward-up-list) (char-after)))
-               (close (save-excursion (up-list) (char-before))))
+         (let ((open (save-excursion (paredit-backward-up) (char-after)))
+               (close (save-excursion (paredit-forward-up) (char-before))))
            (delete-horizontal-space)
            (insert close)
            (save-excursion
