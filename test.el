@@ -1409,3 +1409,11 @@ Four arguments: the paredit command, the text of the buffer
     ("(let ((x 0)) a (progn|) b)" "(progn |(let ((x 0)) a b))")
     ("(let ((x 0)) a (progn| ) b)" "(progn |(let ((x 0)) a b))")
     ("(let ((x 0)) a (progn |) b)" "(progn |(let ((x 0)) a b))")))
+
+(paredit-test 'paredit-raise-sexp
+  `((,(concat
+       "(let ((x 5))\n  (let ((y 3))\n    |(foo bar\n         baz)\n"
+       "    (quux))\n   (wrong indent))")
+     "(let ((x 5))\n  |(foo bar\n       baz)\n   (wrong indent))")
+    ("(define (f x #!optional\n (|wrong indent))\n  (+ 1 2))"
+     "(define (f x #!optional\n |wrong)\n  (+ 1 2))")))

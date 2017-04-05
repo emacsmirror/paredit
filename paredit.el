@@ -2156,7 +2156,15 @@ If the point is on an S-expression, such as a string or a symbol, not
       (delete-region (point) (scan-sexps (point) 1))
       (let* ((indent-start (point))
              (indent-end (save-excursion (insert sexps) (point))))
-        (indent-region indent-start indent-end nil)))))
+        ;; If the expression spans multiple lines, its indentation is
+        ;; probably broken, so reindent it -- but don't reindent
+        ;; anything that we didn't touch outside the expression.
+        ;;
+        ;; XXX What if the *column* of the starting point was preserved
+        ;; too?  Should we avoid reindenting in that case?
+        (if (not (eq (save-excursion (goto-char indent-start) (point-at-eol))
+                     (save-excursion (goto-char indent-end) (point-at-eol))))
+            (indent-region indent-start indent-end nil))))))
 
 ;;; The effects of convolution on the surrounding whitespace are pretty
 ;;; random.  If you have better suggestions, please let me know.
