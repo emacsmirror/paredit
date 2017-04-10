@@ -25,16 +25,16 @@
 ;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; The currently released version of paredit is available at
-;;;   <http://mumble.net/~campbell/emacs/paredit.el>.
+;;;   <https://mumble.net/~campbell/emacs/paredit.el>.
 ;;;
 ;;; The latest beta version of paredit is available at
-;;;   <http://mumble.net/~campbell/emacs/paredit-beta.el>.
+;;;   <https://mumble.net/~campbell/emacs/paredit-beta.el>.
 ;;;
 ;;; The Git repository for paredit is available at
-;;;   <http://mumble.net/~campbell/git/paredit.git>
+;;;   <https://mumble.net/~campbell/git/paredit.git>
 ;;;
 ;;; Release notes are available at
-;;;   <http://mumble.net/~campbell/emacs/paredit.release>.
+;;;   <https://mumble.net/~campbell/emacs/paredit.release>.
 
 ;;; Install paredit by placing `paredit.el' in `/path/to/elisp', a
 ;;; directory of your choice, and adding to your .emacs file:
