@@ -963,7 +963,7 @@ If not in a string, act as `paredit-doublequote'; if not prefix argument
   ;; -- then delete the backslash to avoid a dangling escape.
   (let ((delete-p t))
     (unwind-protect
-        (let ((char (read-char "Character to escape: ")))
+        (let ((char (read-char "Character to escape: " t)))
           (if (not (eq char ?\^?))
               (progn (message "Character to escape: %c" char)
                      (insert char)
