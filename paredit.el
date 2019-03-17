@@ -199,7 +199,7 @@ If point was on indentation, it stays in indentation."
   "Keymap for the paredit minor mode.")
 
 (defvar paredit-override-check-parens-function
-  (lambda (condition) condition nil)
+  (lambda (condition) (declare ignore condition) nil)
   "Function to tell whether unbalanced text should inhibit Paredit Mode.")
 
 ;;;###autoload
