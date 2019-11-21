@@ -1417,3 +1417,84 @@ Four arguments: the paredit command, the text of the buffer
      "(let ((x 5))\n  |(foo bar\n       baz)\n   (wrong indent))")
     ("(define (f x #!optional\n (|wrong indent))\n  (+ 1 2))"
      "(define (f x #!optional\n |wrong)\n  (+ 1 2))")))
+
+(let ((paredit-comment-prefix-toplevel ";;;T ")
+      (paredit-comment-prefix-code ";;C ")
+      (paredit-comment-prefix-margin ";M "))
+  (paredit-test 'paredit-comment-dwim
+    '(("|\n(f xy\n   z\n   w)\n"
+       ";;;T |\n(f xy\n   z\n   w)\n"
+       ";;;|T \n(f xy\n   z\n   w)\n"
+       ";;;|T \n(f xy\n   z\n   w)\n")
+      ("\n|(f xy\n   z\n   w)\n"
+       "\n;;;T |\n(f xy\n   z\n   w)\n"
+       "\n;;;|T \n(f xy\n   z\n   w)\n"
+       "\n;;;|T \n(f xy\n   z\n   w)\n")
+      ("\n(|f xy\n   z\n   w)\n"
+       "\n(\n ;;C |\n f xy\n   z\n   w)\n"
+       "\n(\n ;;|C \n f xy\n   z\n   w)\n"
+       "\n(\n ;;|C \n f xy\n   z\n   w)\n")
+      ("\n(f| xy\n   z\n   w)\n"
+       "\n(f\n ;;C |\n xy\n z\n w)\n"
+       "\n(f\n ;;|C \n xy\n z\n w)\n"
+       "\n(f\n ;;|C \n xy\n z\n w)\n")
+      ("\n(f |xy\n   z\n   w)\n"
+       "\n(f\n ;;C |\n xy\n z\n w)\n"
+       "\n(f\n ;;|C \n xy\n z\n w)\n"
+       "\n(f\n ;;|C \n xy\n z\n w)\n")
+      ("\n(f x|y\n   z\n   w)\n"
+       "\n(f x\n   ;;C |\n   y\n   z\n   w)\n"
+       "\n(f x\n   ;;|C \n   y\n   z\n   w)\n"
+       "\n(f x\n   ;;|C \n   y\n   z\n   w)\n")
+      ("\n(f xy|\n   z\n   w)\n"
+       "\n(f xy                                   ;M |\n   z\n   w)\n"
+       "\n(f xy                                   ;|M \n   z\n   w)\n"
+       "\n(f xy                                   ;|M \n   z\n   w)\n")
+      ("\n(f xy\n|   z\n   w)\n"
+       "\n(f xy\n   ;;C |\n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n")
+      ("\n(f xy\n |  z\n   w)\n"
+       "\n(f xy\n   ;;C |\n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n")
+      ("\n(f xy\n  | z\n   w)\n"
+       "\n(f xy\n   ;;C |\n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n")
+      ("\n(f xy\n   |z\n   w)\n"
+       "\n(f xy\n   ;;C |\n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n"
+       "\n(f xy\n   ;;|C \n   z\n   w)\n")
+      ("\n(f xy\n   z|\n   w)\n"
+       "\n(f xy\n   z                                    ;M |\n   w)\n"
+       "\n(f xy\n   z                                    ;|M \n   w)\n"
+       "\n(f xy\n   z                                    ;|M \n   w)\n")
+      ("\n(f xy\n   z\n|   w)\n"
+       "\n(f xy\n   z\n   ;;C |\n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n")
+      ("\n(f xy\n   z\n |  w)\n"
+       "\n(f xy\n   z\n   ;;C |\n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n")
+      ("\n(f xy\n   z\n  | w)\n"
+       "\n(f xy\n   z\n   ;;C |\n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n")
+      ("\n(f xy\n   z\n   |w)\n"
+       "\n(f xy\n   z\n   ;;C |\n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n"
+       "\n(f xy\n   z\n   ;;|C \n   w)\n")
+      ("\n(f xy\n   z\n   w|)\n"
+       "\n(f xy\n   z\n   w\n   ;;C |\n   )\n"
+       "\n(f xy\n   z\n   w\n   ;;|C \n   )\n"
+       "\n(f xy\n   z\n   w\n   ;;|C \n   )\n")
+      ("\n(f xy\n   z\n   w)|\n"
+       "\n(f xy\n   z\n   w)                                   ;M |\n"
+       "\n(f xy\n   z\n   w)                                   ;|M \n"
+       "\n(f xy\n   z\n   w)                                   ;|M \n")
+      ("\n(f xy\n   z\n   w)\n|"
+       "\n(f xy\n   z\n   w)\n;;;T |"
+       "\n(f xy\n   z\n   w)\n;;;|T "
+       "\n(f xy\n   z\n   w)\n;;;|T "))))
