@@ -63,7 +63,8 @@ Four arguments: the paredit command, the text of the buffer
   (scheme-mode)
   (set (make-local-variable 'indent-tabs-mode) nil)
   (set (make-local-variable 'comment-column) 40)
-  (set (make-local-variable 'show-trailing-whitespace) nil))
+  (set (make-local-variable 'show-trailing-whitespace) nil)
+  (set (make-local-variable 'minibuffer-message-timeout) 0))
 
 (paredit-do-commands (spec keys command examples)
     nil                                 ;string case
