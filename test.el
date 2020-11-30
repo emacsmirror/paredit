@@ -43,33 +43,37 @@ Four arguments: the paredit command, the text of the buffer
             (and (eq (car example) 'xfail)
                  (progn (setq example (cdr example)) t)))
            (before (car example)))
-      (dolist (expected (cdr example))
-        (with-temp-buffer
-          (paredit-test-buffer-setup)
-          (insert before)
-          (goto-char (point-min))
-          (if (search-forward "_" nil t)
-              (progn (delete-char -1) (set-mark (point))))
-          (goto-char (point-min))
-          (search-forward "|")
-          (delete-char -1)
-          (if (cond ((eq expected 'error)
-                     ;++ Check that there are no more expected states.
-                     (condition-case condition
-                         (progn (call-interactively command) t)
-                       (error nil)))
-                    ((stringp expected)
-                     (call-interactively command)
-                     (insert ?\|)
-                     (not (string= expected (buffer-string))))
-                    (t (error "Bad test expectation: %S" expected)))
-              (if (not xfail)
+      (catch 'break
+        (dolist (expected (cdr example))
+          (with-temp-buffer
+            (paredit-test-buffer-setup)
+            (insert before)
+            (goto-char (point-min))
+            (if (search-forward "_" nil t)
+                (progn (delete-char -1) (set-mark (point))))
+            (goto-char (point-min))
+            (search-forward "|")
+            (delete-char -1)
+            (if (cond ((eq expected 'error)
+                       ;++ Check that there are no more expected states.
+                       (condition-case condition
+                           (progn (call-interactively command) t)
+                         (error nil)))
+                      ((stringp expected)
+                       (call-interactively command)
+                       (insert ?\|)
+                       (not (string= expected (buffer-string))))
+                      (t (error "Bad test expectation: %S" expected)))
+                (progn
+                  (if (not xfail)
+                      (let ((actual (buffer-string)))
+                        (paredit-test-failed command before actual expected)))
+                  (throw 'break nil))
+              (if xfail
                   (let ((actual (buffer-string)))
-                    (paredit-test-failed command before actual expected)))
-            (if xfail
-                (let ((actual (buffer-string)))
-                  (paredit-test-failed command before actual 'failure)))))
-        (setq before expected)))))
+                    (paredit-test-failed command before actual 'failure)
+                    (throw 'break nil)))))
+          (setq before expected))))))
 
 (defun paredit-test-buffer-setup ()
   (scheme-mode)
