@@ -794,7 +794,13 @@ Four arguments: the paredit command, the text of the buffer
     ("\"|\"" error)
     ("\"|xy\"" error)                   ;++ Could be done.  Why not?
     ("\"x|y\"" error)
-    ("\"xy|\"" error)))
+    ("\"xy|\"" error)
+
+    ("|x(y)" error)
+    ("x|(y)" error)
+    (xfail "x(|y)" "x |y ()" error)
+    (xfail "x(y|)" "x y (|)" error)
+    ("x(y)|" error)))
 
 (paredit-test 'paredit-forward
   '(("|" "|")
