@@ -1282,6 +1282,7 @@ Four arguments: the paredit command, the text of the buffer
     ("\"\" |\"\"" error)
     ;; ("\"\" \"|\"" error)             ;++ Urk...
     ("\"\" \"\"|" error)
+
     ("|(#\\x) y" error)
     ("(|#\\x) y" "(|#\\x y)")
     ("(#|\\x) y" "(#|\\x y)")
@@ -1298,6 +1299,11 @@ Four arguments: the paredit command, the text of the buffer
     ("(\"x\")| y" error)
     ("(\"x\") |y" error)
     ("(\"x\") y|" error)
+    ("|()y" error)
+    ("(|)y" "(|y)")
+    (xfail "(|y)" error)
+    ("()|y" error)
+    ("()y|" error)
     ("|(x)y" error)
     (xfail "(|x)y" "(|x y)" error)
     (xfail"(x|)y" "(x| y)" error)
@@ -1361,6 +1367,7 @@ Four arguments: the paredit command, the text of the buffer
     ("\"\" |\"\"" error)
     ("\"\" \"|\"" "\"\\\"\\\"|\"")
     ("\"\" \"\"|" error)
+
     ("|x (#\\y)" error)
     ("x| (#\\y)" error)
     ("x |(#\\y)" error)
@@ -1377,6 +1384,11 @@ Four arguments: the paredit command, the text of the buffer
     ("x (\"y|\")" "(x \"y|\")" "(\"x y|\")")
     ("x (\"y\"|)" "(x \"y\"|)")
     ("x (\"y\")|" error)
+    ("|x()" error)
+    ("x|()" error)
+    ("x(|)" "(x|)")
+    (xfail "(x|)" error)
+    ("x()|" error)
     ("|x(y)" error)
     ("x|(y)" error)
     (xfail "x(|y)" "(x |y)" error)
