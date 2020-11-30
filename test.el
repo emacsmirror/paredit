@@ -19,9 +19,13 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
 
+(defvar paredit-test-nfailures 0)
+(setq paredit-test-nfailures 0)
+
 (defun paredit-test-failure-default (command before after expected)
-  (error "%S failed test: after %S, got %S but expected %S."
-         command before after expected))
+  (setq paredit-test-nfailures (+ 1 paredit-test-nfailures))
+  (warn "%S failed test: after %S, got %S but expected %S."
+        command before after expected))
 
 (defvar paredit-test-failure-function 'paredit-test-failure-default
   "Function to call when `paredit-test' fails.
@@ -35,7 +39,10 @@ Four arguments: the paredit command, the text of the buffer
 (defun paredit-test (command examples)
   (message "Testing %S..." command)
   (dolist (example examples)
-    (let ((before (car example)))
+    (let* ((xfail
+            (and (eq (car example) 'xfail)
+                 (progn (setq example (cdr example)) t)))
+           (before (car example)))
       (dolist (expected (cdr example))
         (with-temp-buffer
           (paredit-test-buffer-setup)
@@ -56,7 +63,12 @@ Four arguments: the paredit command, the text of the buffer
                      (insert ?\|)
                      (not (string= expected (buffer-string))))
                     (t (error "Bad test expectation: %S" expected)))
-              (paredit-test-failed command before (buffer-string) expected)))
+              (if (not xfail)
+                  (let ((actual (buffer-string)))
+                    (paredit-test-failed command before actual expected)))
+            (if xfail
+                (let ((actual (buffer-string)))
+                  (paredit-test-failed command before actual 'failure)))))
         (setq before expected)))))
 
 (defun paredit-test-buffer-setup ()
@@ -1499,3 +1511,6 @@ Four arguments: the paredit command, the text of the buffer
        "\n(f xy\n   z\n   w)\n;;;T |"
        "\n(f xy\n   z\n   w)\n;;;|T "
        "\n(f xy\n   z\n   w)\n;;;|T "))))
+
+(if (> paredit-test-nfailures 0)
+    (error "%S paredit tests failed" paredit-test-nfailures))
