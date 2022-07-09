@@ -109,6 +109,16 @@
 ;;;
 ;;;   (foo (bar | baz) quux)  C-<right>  (foo (bar | baz quux))
 ;;;
+;;; Note: Paredit Mode is not compatible with Electric Indent Mode.
+;;; Use one or the other, not both.  If you want RET to auto-indent and
+;;; C-j to just insert newline in Paredit Mode, simply rebind the keys
+;;; with the following fragment in your .emacs file:
+;;;
+;;;     (eval-after-load 'paredit
+;;;       '(progn
+;;;          (define-key paredit-mode-map (kbd "RET") 'paredit-newline)
+;;;          (define-key paredit-mode-map (kbd "C-j") nil)))
+;;;
 ;;; Some paredit commands automatically reindent code.  When they do,
 ;;; they try to indent as locally as possible, to avoid interfering
 ;;; with any indentation you might have manually written.  Only the
