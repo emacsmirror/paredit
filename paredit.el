@@ -1005,7 +1005,9 @@ If the point is in a string or a comment, fill the paragraph instead,
   (interactive "P")
   (if (or (paredit-in-string-p)
           (paredit-in-comment-p))
-      (lisp-fill-paragraph argument)
+      (if (memq fill-paragraph-function '(t nil))
+          (lisp-fill-paragraph argument)
+        (funcall fill-paragraph-function argument))
     (paredit-preserving-column
       (save-excursion
         (end-of-defun)
