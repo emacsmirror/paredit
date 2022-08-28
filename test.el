@@ -1481,6 +1481,18 @@ Four arguments: the paredit command, the text of the buffer
      "(let ((x 5))\n  |(foo bar\n       baz)\n   (wrong indent))")
     ("(define (f x #!optional\n (|wrong indent))\n  (+ 1 2))"
      "(define (f x #!optional\n |wrong)\n  (+ 1 2))")))
+
+(let ((transient-mark-mode t))
+  (paredit-test 'paredit-raise-sexp
+    '(("(a |b c_ d)" "|b c")
+      ("(a (b |c d_ e) f)" "(a |c d f)")
+      ("(a \"|b\" c_ d)" error))))
+
+(let ((transient-mark-mode nil))
+  (paredit-test 'paredit-raise-sexp
+    '(("(a |b c_ d)" "|b")
+      ("(a (b |c d_ e) f)" "(a |c f)")
+      ("(a \"|b\" c_ d)" "|\"b\""))))
 
 (let ((paredit-comment-prefix-toplevel ";;;T ")
       (paredit-comment-prefix-code ";;C ")

@@ -2158,17 +2158,22 @@ If the point is on an S-expression, such as a string or a symbol, not
   between them, that S-expression is considered to follow the point."
   (interactive "P")
   (save-excursion
-    (cond ((paredit-in-string-p)
-           (goto-char (car (paredit-string-start+end-points))))
-          ((paredit-in-char-p)
-           (backward-sexp))
-          ((paredit-in-comment-p)
-           (error "No S-expression to raise in comment.")))
     ;; Select the S-expressions we want to raise in a buffer substring.
-    (let* ((n (prefix-numeric-value argument))
-           (bound (scan-sexps (point) n))
+    (let* ((bound
+            (if (and (not argument) (paredit-region-active-p))
+                (progn (if (< (mark) (point))
+                           (paredit-check-region (mark) (point))
+                           (paredit-check-region (point) (mark)))
+                       (mark))
+              (cond ((paredit-in-string-p)
+                     (goto-char (car (paredit-string-start+end-points))))
+                    ((paredit-in-char-p)
+                     (backward-sexp))
+                    ((paredit-in-comment-p)
+                     (error "No S-expression to raise in comment.")))
+              (scan-sexps (point) (prefix-numeric-value argument))))
            (sexps
-            (if (< n 0)
+            (if (< bound (point))
                 (buffer-substring bound (paredit-point-at-sexp-end))
                 (buffer-substring (paredit-point-at-sexp-start) bound))))
       ;; Move up to the list we're raising those S-expressions out of and
