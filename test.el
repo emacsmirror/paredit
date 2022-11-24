@@ -220,13 +220,31 @@ Four arguments: the paredit command, the text of the buffer
   (paredit-test 'paredit-wrap-sexp
     '(("(foo |bar baz)" "(foo (|bar baz))"))))
 
-(paredit-test 'paredit-newline
-  '(("\"foo|bar\"" "\"foo\n|bar\"")
-    ("(frob grovel ;full |(lexical)\n      mumble)"
-     "(frob grovel ;full\n      |(lexical)\n      mumble)")
-    ("(frob grovel ;full (|lexical)\n      mumble)"
-     "(frob grovel ;full (\n             ;|lexical)\n      mumble)")
-    ("#\\|(" "#\\(\n|")))
+(let ((plain-newline-tests
+       '(("\"foo|bar\"" "\"foo\n|bar\"")
+         ("(frob grovel ;full |(lexical)\n      mumble)"
+          "(frob grovel ;full \n|(lexical)\n      mumble)")
+         ("(frob grovel ;full (|lexical)\n      mumble)"
+          "(frob grovel ;full (\n|lexical)\n      mumble)")
+         ("#\\|(" "#\\\n|(")))
+      (indented-newline-tests
+       '(("\"foo|bar\"" "\"foo\n|bar\"")
+         ("(frob grovel ;full |(lexical)\n      mumble)"
+          "(frob grovel ;full\n      |(lexical)\n      mumble)")
+         ("(frob grovel ;full (|lexical)\n      mumble)"
+          "(frob grovel ;full (\n             ;|lexical)\n      mumble)")
+         ("#\\|(" "#\\(\n|"))))
+  (if (boundp 'electric-indent-mode)
+      (progn
+        (let ((electric-indent-mode t))
+          (paredit-test 'paredit-RET indented-newline-tests)
+          (paredit-test 'paredit-C-j plain-newline-tests))
+        (let ((electric-indent-mode nil))
+          (paredit-test 'paredit-RET plain-newline-tests)
+          (paredit-test 'paredit-C-j indented-newline-tests)))
+    (paredit-test 'paredit-RET plain-newline-tests)
+    (paredit-test 'paredit-C-j indented-newline-tests))
+  (paredit-test 'paredit-newline indented-newline-tests))
 
 (paredit-test 'paredit-reindent-defun
   ;++ Test filling paragraphs in comments and strings.

@@ -22,6 +22,7 @@ The latest version of this file is available at
 *** Reading character in Backslash escape now inherits input method.
 *** M-r (paredit-raise-sexp) no longer reindents single-line sexps.
 *** Various bug fixes and additions to test suite.
+*** Worked around brokenness induced by Electric Indent Mode.
 
 ** Version 24
 
