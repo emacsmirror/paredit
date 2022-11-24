@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2005--2022 Taylor R. Campbell
 
-;; Author: Taylor R. Campbell <campbell+paredit@mumble.net>
+;; Author: Taylor R. Campbell <campbell@paredit.org>
 ;; Version: 25beta
 ;; Created: 2005-07-31
 ;; Keywords: lisp
@@ -24,17 +24,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with paredit.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; The currently released version of paredit is available at
-;;;   <https://mumble.net/~campbell/emacs/paredit.el>.
+;;; Paredit - https://paredit.org
 ;;;
-;;; The latest beta version of paredit is available at
-;;;   <https://mumble.net/~campbell/emacs/paredit-beta.el>.
-;;;
-;;; The Git repository for paredit is available at
-;;;   <https://mumble.net/~campbell/git/paredit.git>
-;;;
-;;; Release notes are available at
-;;;   <https://mumble.net/~campbell/emacs/paredit.release>.
+;;; Latest release: https://paredit.org/paredit.el
+;;; Current development version: https://paredit.org/paredit-beta.el
+;;; Release notes: https://paredit.org/NEWS
 
 ;;; Install paredit by placing `paredit.el' in `/path/to/elisp', a
 ;;; directory of your choice, and adding to your .emacs file:
@@ -57,7 +51,7 @@
 ;;;          'paredit-dwim)))
 ;;;
 ;;; Send questions, bug reports, comments, feature suggestions, &c.,
-;;; via email to the author's surname at mumble.net.
+;;; via email to the author's surname at paredit.org.
 ;;;
 ;;; Paredit should run in GNU Emacs 21 or later and XEmacs 21.5.28 or
 ;;; later.
