@@ -3,7 +3,7 @@
 ;; Copyright (C) 2005--2022 Taylor R. Campbell
 
 ;; Author: Taylor R. Campbell <campbell@paredit.org>
-;; Version: 25beta
+;; Version: 26beta
 ;; Created: 2005-07-31
 ;; Keywords: lisp
 
@@ -126,7 +126,7 @@
 
 ;;; This assumes Unix-style LF line endings.
 
-(defconst paredit-version 25)
+(defconst paredit-version 26)
 (defconst paredit-beta-p t)
 
 (eval-and-compile
