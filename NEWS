@@ -15,6 +15,7 @@ Current development version: https://paredit.org/paredit-beta.el
 *** M-r (paredit-raise-sexp) no longer reindents single-line sexps.
 *** Various bug fixes and additions to test suite.
 *** Worked around brokenness induced by Electric Indent Mode.
+**** (Thanks to Sean Whitton for reporting the bug and discussing the fix.)
 
 ** Version 24 -- 2014-12-06
 
