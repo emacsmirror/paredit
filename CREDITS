@@ -1,14 +1,11 @@
-The original inspirations for paredit were Interlisp-D's structure
-editor `SEdit' -- a real structure editor, not a cheesy imitation like
-paredit -- and Guillaume Germain's sedit.el for GNU Emacs.
+Paredit was inspired by:
 
-The following people have contributed to paredit in some way -- by
-submitting patches, by discussing design, by testing paredit and
-finding broken corner cases, &c.  It is not complete: most of those who
-contributed via IRC are missing, for example, and I started this list
-long after I ought to have.  If your name is not listed here and you
-think it should be, or if your name is listed here and you would rather
-that it not be, then let me know.
+- Interlisp-D's structure editor SEdit
+- Guillaume Germain's sedit.el for GNU Emacs
+
+The following people contributed to paredit by submitting patches,
+discussing design, testing and finding broken corner cases, and in
+other ways:
 
 Rudolf Adamkovič
 Marco Baringer
@@ -44,3 +41,7 @@ Goran Weinholt
 Norman Werner
 Sean Whitton
 John Wiegley
+
+(With apologies to the early contributors from before I started writing
+this file whose names I may have forgotten!  If your name is missing,
+or if you would like your name removed, just let me know.)
