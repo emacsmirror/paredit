@@ -7,7 +7,7 @@ https://paredit.org
 Latest release: https://paredit.org/paredit.el
 Current development version: https://paredit.org/paredit-beta.el
 
-** Version 25 (beta)
+** Version 25 -- 2022-11-25
 
 *** paredit now lives at paredit.org.
 *** M-r (paredit-raise-sexp) now respects active mark in Transient Mark Mode.
