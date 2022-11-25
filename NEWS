@@ -16,7 +16,7 @@ Current development version: https://paredit.org/paredit-beta.el
 *** Various bug fixes and additions to test suite.
 *** Worked around brokenness induced by Electric Indent Mode.
 
-** Version 24
+** Version 24 -- 2014-12-06
 
 *** Slurp/barf now support prefix arguments with the obvious semantics.
 *** HTML quick reference is a little prettier now, perhaps.
@@ -30,7 +30,7 @@ Current development version: https://paredit.org/paredit-beta.el
 *** `backward-delete-char' changes in GNU Emacs 24 no longer botch paredit.
 *** Various bug fixes.
 
-** Version 23
+** Version 23 -- 2013-04-07
 
 Paredit no longer runs in GNU Emacs 20.  It now requires 21 or later.
 
@@ -43,7 +43,7 @@ Paredit now has a small set of automatic tests.
 *** Renamed command: paredit-recentre-on-sexp -> paredit-recenter-on-sexp
 *** Various bug fixes.
 
-** Version 22
+** Version 22 -- 2010-10-09
 
 The copying terms of paredit are now the GPLv3+, rather than the
 3-clause BSD licence.
@@ -147,7 +147,7 @@ The copying terms of paredit are now the GPLv3+, rather than the
     (add-to-list 'paredit-space-for-delimiter-predicates
                  'paredit-space-for-delimiter-predicate-common-lisp)))
 
-** Version 21
+** Version 21 -- 2008-07-24
 
 Paredit 21 no longer has a message releasing it into the public domain.
 Instead it is copyright (C) 2008, Taylor R. Campbell, and available
@@ -341,7 +341,7 @@ for details.
   defined in terms of the modified `paredit-wrap-sexp'.  `M-[' is now
   bound to `paredit-wrap-square'.
 
-** Version 20
+** Version 20 -- 2007-04-04
 
 *** Preliminary Support for XEmacs
 
@@ -444,7 +444,7 @@ needed were:
   `M-<up>', and `M-<down>') now always create a new entry on the kill
   ring.
 
-** Version 19
+** Version 19 -- 2006-03-28
 
 This version introduces support for delimiters other than round
 brackets.  Previously, if the major mode's syntax table considered
@@ -475,7 +475,7 @@ until satisfied, and now C-M-SPC (mark-sexp) until you have marked
 the desired expressions and then any of the delimiter pair insertion
 keys to insert the delimiters.
 
-** Version 18
+** Version 18 -- 2006-02-11
 
 *** Style and Bugs
 
@@ -528,7 +528,7 @@ keys to insert the delimiters.
 - Extended paredit command examples to allow multiple steps in
   succession of a single example.
 
-** Version 17
+** Version 17 -- 2005-12-31
 
 *** Style and Bugs
 
@@ -570,7 +570,7 @@ keys to insert the delimiters.
   inserting a superfluous leading newline.  To comment out code, you
   must still use M-; or M-x comment-region.
 
-** Version 16
+** Version 16 -- 2005
 
 - Introduced M-S (paredit-split-sexp) to split lists or strings from
   the middle.
@@ -579,14 +579,14 @@ keys to insert the delimiters.
   identify the key sequence meta-semicolon, not "M-;" for M hyphen
   semicolon.
 
-** Version 15
+** Version 15 -- 2005
 
 - Rewrote comment insertion code.
 
 - Implemented M-; (paredit-comment-dwim), which is like comment-dwim
   but inserts comments more appropriately with respect to paredit.
 
-** Version 14
+** Version 14 -- 2005
 
 Version 14 introduced fancy comment handling:
 
@@ -602,7 +602,7 @@ Version 14 introduced fancy comment handling:
   uncommented) or whole S-expressions, usually in conjunction with
   C-M-SPC (mark-sexp).
 
-** Version 13
+** Version 13 -- 2005
 
 - Removed M-\ (paredit-join-sexps), whose key binding conflicts with
   delete-horizontal-space and whose implementation was inadequate and
@@ -625,7 +625,7 @@ Version 14 introduced fancy comment handling:
   . Removed unnecessary save-excursion in paredit-recentre-on-sexp.
   . IF indentation changes.
 
-** Version 12
+** Version 12 -- 2005
 
 - Implemented M-r (paredit-raise-sexp), which raises a single
   S-expression up the tree, deleting all of its siblings and its
@@ -640,7 +640,7 @@ Version 14 introduced fancy comment handling:
 
 - Made backward barfing signal an error, not just a message.
 
-** Version 11
+** Version 11 -- 2005
 
 - Changed the key for paredit-splice-sexp from M-/, which is by
   default the popular dabbrev-expand, to M-s, which I was surprised
@@ -662,7 +662,7 @@ Version 14 introduced fancy comment handling:
 
 - Rewrote much of paredit-kill, again.
 
-** Version 10
+** Version 10 -- 2005
 
 - Introduced paredit-forward and paredit-backward, which are like
   forward-sexp and backward-sexp but which will also go up a nesting
@@ -679,7 +679,7 @@ Version 14 introduced fancy comment handling:
 - Changed suggestion of what to put in your .emacs from require to
   autoload.
 
-** Version 9
+** Version 9 -- 2005
 
 - Introduced enable-paredit-mode and disable-paredit-mode to better
   choose which one to enable.
@@ -687,7 +687,7 @@ Version 14 introduced fancy comment handling:
 - Forced blinkage of matching parentheses in paredit-close-list and
   paredit-close-list-and-newline, even if show-paren-mode is enabled.
 
-** Version 8
+** Version 8 -- 2005
 
 - Added paredit-terminal-mode, which is like paredit-mode but which
   provides key bindings that work in terminals, while paredit-mode
@@ -731,7 +731,7 @@ Version 14 introduced fancy comment handling:
   no prefix because it ought to be defined in lisp.el with this name
   anyway.)
 
-** Version 7
+** Version 7 -- 2005-09
 
 - Changed paredit-open-list and paredit-close-list so that they will
   refuse to insert parentheses inside character literals.
@@ -746,7 +746,7 @@ Version 14 introduced fancy comment handling:
 
 - Fixed bugs in deletion within character literals and strings.
 
-** Versions 2--6
+** Versions 2 through 6 -- 2005-08-09
 
 (I lost versions 2, 3, 4, & 5.)
 
@@ -778,3 +778,5 @@ Version 14 introduced fancy comment handling:
 - Changed the splicage, joinage, slurpage, and barfage commands so
   that they will reindent only the modified list, not the whole
   definition.
+
+** Version 1 -- 2005-08-01
