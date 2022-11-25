@@ -1,12 +1,15 @@
 * Paredit Release Notes                                 -*- outline -*-
 
-Paredit - https://paredit.org
+paredit -- parenthetical editing in Emacs
+
+https://paredit.org
 
 Latest release: https://paredit.org/paredit.el
 Current development version: https://paredit.org/paredit-beta.el
 
 ** Version 25 (beta)
 
+*** paredit now lives at paredit.org.
 *** M-r (paredit-raise-sexp) now respects active mark in Transient Mark Mode.
 *** Paredit Mode and Electric Indent Mode are noted as incompatible.
 *** M-q (paredit-reindent-defun) now respects `fill-paragraph-function'.
