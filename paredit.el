@@ -340,7 +340,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
    ("C-j"       paredit-C-j)
 
    "Deleting & Killing"
-   (("C-d" ,@paredit-forward-delete-keys)
+   (,paredit-forward-delete-keys
                 paredit-forward-delete
                 ("(quu|x \"zot\")" "(quu| \"zot\")")
                 ("(quux |\"zot\")"
@@ -356,6 +356,13 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
                  "(\"zo|\" quux)")
                 ("(foo (|) bar)" "(foo | bar)")
                 ("(foo bar)|" "(foo bar|)"))
+   ("C-d"       paredit-delete-char
+                ("(quu|x \"zot\")" "(quu| \"zot\")")
+                ("(quux |\"zot\")"
+                 "(quux \"|zot\")"
+                 "(quux \"|ot\")")
+                ("(foo (|) bar)" "(foo | bar)")
+                ("|(foo bar)" "(|foo bar)"))
    ("C-k"       paredit-kill
                 ("(foo bar)|     ; Useless comment!"
                  "(foo bar)|")
@@ -1241,6 +1248,33 @@ This is expected to be called only in `paredit-comment-dwim'; do not
 
 ;;;; Character Deletion
 
+(defun paredit-delete-char (&optional argument)
+  "Delete a character forward or move forward over a delimiter.
+If on an opening S-expression delimiter, move forward into the
+  S-expression.
+If on a closing S-expression delimiter, refuse to delete unless the
+  S-expression is empty, in which case delete the whole S-expression.
+With a numeric prefix argument N, delete N characters forward.
+With a `C-u' prefix argument, simply delete a character forward,
+  without regard for delimiter balancing.
+
+Like `delete-char', ignores `delete-active-region'."
+  (interactive "P")
+  (let ((delete-active-region nil))
+    (paredit-forward-delete argument)))
+
+(defun paredit-delete-active-region-p ()
+  "True if the region is active and to be deleted."
+  (and (paredit-region-active-p)
+       (boundp 'delete-active-region)
+       (eq delete-active-region t)))
+
+(defun paredit-kill-active-region-p ()
+  "True if the region is active and to be killed."
+  (and (paredit-region-active-p)
+       (boundp 'delete-active-region)
+       (eq delete-active-region 'kill)))
+
 (defun paredit-forward-delete (&optional argument)
   "Delete a character forward or move forward over a delimiter.
 If on an opening S-expression delimiter, move forward into the
@@ -1249,16 +1283,27 @@ If on a closing S-expression delimiter, refuse to delete unless the
   S-expression is empty, in which case delete the whole S-expression.
 With a numeric prefix argument N, delete N characters forward.
 With a `C-u' prefix argument, simply delete a character forward,
-  without regard for delimiter balancing."
+  without regard for delimiter balancing.
+
+If `delete-active-region' is enabled and the mark is active and
+  no prefix argument is specified, act as `paredit-delete-region'
+  or `paredit-kill-region' as appropriate instead."
   (interactive "P")
-  (cond ((or (consp argument) (eobp))
+  (cond ((consp argument)
          (delete-char +1))
         ((integerp argument)
-         (if (< argument 0)
-             (paredit-backward-delete argument)
+         (let ((delete-active-region nil))
+           (if (< argument 0)
+               (paredit-backward-delete argument)
              (while (> argument 0)
                (paredit-forward-delete)
-               (setq argument (- argument 1)))))
+               (setq argument (- argument 1))))))
+        ((paredit-delete-active-region-p)
+         (paredit-delete-region (region-beginning) (region-end)))
+        ((paredit-kill-active-region-p)
+         (paredit-kill-region (region-beginning) (region-end)))
+        ((eobp)
+         (delete-char +1))
         ((paredit-in-string-p)
          (paredit-forward-delete-in-string))
         ((paredit-in-comment-p)
@@ -1348,17 +1393,28 @@ If on an opening S-expression delimiter, refuse to delete unless the
   S-expression is empty, in which case delete the whole S-expression.
 With a numeric prefix argument N, delete N characters backward.
 With a `C-u' prefix argument, simply delete a character backward,
-  without regard for delimiter balancing."
+  without regard for delimiter balancing.
+
+If `delete-active-region' is enabled and the mark is active and
+  no prefix argument is specified, act as `paredit-delete-region'
+  or `paredit-kill-region' as appropriate instead."
   (interactive "P")
-  (cond ((or (consp argument) (bobp))
+  (cond ((consp argument)
          ;++ Should this untabify?
          (delete-char -1))
         ((integerp argument)
-         (if (< argument 0)
-             (paredit-forward-delete (- 0 argument))
+         (let ((delete-active-region nil))
+           (if (< argument 0)
+               (paredit-forward-delete (- 0 argument))
              (while (> argument 0)
                (paredit-backward-delete)
-               (setq argument (- argument 1)))))
+               (setq argument (- argument 1))))))
+        ((paredit-delete-active-region-p)
+         (paredit-delete-region (region-beginning) (region-end)))
+        ((paredit-kill-active-region-p)
+         (paredit-kill-region (region-beginning) (region-end)))
+        ((bobp)
+         (delete-char -1))
         ((paredit-in-string-p)
          (paredit-backward-delete-in-string))
         ((paredit-in-comment-p)

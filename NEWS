@@ -10,6 +10,7 @@ Current development version: https://paredit.org/paredit-beta.el
 ** Version 26 (beta)
 
 *** M-s (paredit-splice-sexp) now restores column in text fields like ielm.
+*** Deletion now respects `delete-active-region'.
 
 ** Version 25 -- 2022-11-25
 
