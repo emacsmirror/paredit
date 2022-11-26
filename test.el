@@ -1613,5 +1613,31 @@ Four arguments: the paredit command, the text of the buffer
        "\n(f xy\n   z\n   w)\n;;;|T "
        "\n(f xy\n   z\n   w)\n;;;|T "))))
 
+(paredit-test 'paredit-forward-kill-word
+  '(("|(hello \"world\")"
+     "(| \"world\")"
+     "( \"|\")"
+     error)
+    ("(hello| \"world\")"
+     "(hello \"|\")")
+    ("(hello \"world|\")" error)
+    ("(hello \"world\"|)" error)
+    ("(hello \"world\")|" error)))
+
+(paredit-test 'paredit-backward-kill-word
+  '(("(hello \"world\")|"
+     "(hello \"|\")"
+     "(|\"\")"
+     ;; error or nop -- XXX broken
+     )
+    ("(hello \"|world\")"
+     "(|\"world\")"
+     ;; error or nop -- XXX broken
+     )
+    ("(|hello \"world\")"
+     ;; error or nop -- XXX broken
+     )
+    ("|(hello \"world\")" "|(hello \"world\")")))
+
 (if (> paredit-test-nfailures 0)
     (error "%S paredit tests failed" paredit-test-nfailures))
