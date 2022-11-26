@@ -1,0 +1,28 @@
+name: paredit test
+
+on:
+  push:
+    paths-ignore:
+    - .gitignore
+    - COPYING
+    - CREDITS
+    - NEWS
+  pull_request:
+    paths-ignore:
+    - .gitignore
+    - COPYING
+    - CREDITS
+    - NEWS
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3
+    - name: install emacs
+      run: >
+        sudo apt-get update &&
+        sudo apt-get install emacs
+    - name: check.sh
+      run: ./check.sh
