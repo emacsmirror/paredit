@@ -1509,7 +1509,12 @@ On a line with no S-expressions on it starting after the point or
   within a comment, act exactly as `kill-line'.
 Otherwise, kill all S-expressions that start after the point.
 With a `C-u' prefix argument, just do the standard `kill-line'.
-With a numeric prefix argument N, do `kill-line' that many times."
+With a numeric prefix argument N, do `kill-line' that many times.
+
+If `kill-whole-line' is true, kills the newline character and
+  indentation on the next line as well.
+In that case, ensure there is at least one space between the
+  preceding S-expression and whatever follows on the next line."
   (interactive "P")
   (cond (argument
          (kill-line (if (integerp argument) argument 1)))
@@ -1623,13 +1628,9 @@ With a numeric prefix argument N, do `kill-line' that many times."
         ;; Insert a space to avoid invalid joining if necessary.
         ((let ((syn-before (char-syntax (char-before)))
                (syn-after  (char-syntax (char-after))))
-           (or (and (eq syn-before ?\) )            ; Separate opposing
-                    (eq syn-after  ?\( ))           ;   parentheses,
-               (and (eq syn-before ?\" )            ; string delimiter
-                    (eq syn-after  ?\" ))           ;   pairs,
-               (and (memq syn-before '(?_ ?w))      ; or word or symbol
-                    (memq syn-after  '(?_ ?w)))))   ;   constituents.
-         (insert " "))))
+           (and (memq syn-before '(?\) ?\" ?_ ?w))
+                (memq syn-after '(?\( ?\" ?_ ?w))))
+         (save-excursion (insert " ")))))
 
 ;;;;; Killing Words
 

@@ -7,6 +7,11 @@ https://paredit.org
 Latest release: https://paredit.org/paredit.el
 Current development version: https://paredit.org/paredit-beta.el
 
+** Version 27 (beta)
+
+*** Improved some edge cases in paredit-kill with kill-whole-line enabled.
+**** Many other edge cases are slightly broken; patches welcome!
+
 ** Version 26 -- 2022-11-26
 
 Minor bug fix release, mainly to set a new branch scheme:

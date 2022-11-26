@@ -752,13 +752,14 @@ Four arguments: the paredit command, the text of the buffer
     (";f\n(b\n z|)\n" ";f\n(b\n z|)\n")))
 
 (let ((kill-whole-line t))
-  (paredit-test (defun paredit-test-kill ()
+  (paredit-test (defun paredit-test-kill-whole-line ()
                   (interactive)
-                  ;; Horrible kludge.  Do it once, and then yank to make
-                  ;; sure we get back what we expect.  Then do it again,
-                  ;; to get the effects on the buffer the automatic test
-                  ;; framework will check.
-                  (save-excursion
+                  ;; For now the check to see that we yanked the
+                  ;; correct string is disabled, because it isn't quite
+                  ;; right: with kill-whole-line enabled, sometimes it
+                  ;; inserts an extra space to avoid joining two
+                  ;; expressions.
+                  '(save-excursion
                     (let ((kill-ring nil))
                       (let ((text (buffer-string)))
                         (call-interactively 'paredit-kill)
@@ -819,9 +820,8 @@ Four arguments: the paredit command, the text of the buffer
       ("\"\n\"\n|" error)
 
       ("|(a (b) (c)\n   (d) (e))" "|" error)
-      (xfail
-       "(a| (b) (c)\n   (d) (e))"
-       "(a|   (d) (e))"
+      ("(a| (b) (c)\n   (d) (e))"
+       "(a| (d) (e))"
        "(a|)"
        "(a|)")
       (xfail
@@ -885,7 +885,7 @@ Four arguments: the paredit command, the text of the buffer
 
       ("|(a ((b) (c)\n    (d) (e)) (f))" "|" error)
       (xfail "(|a ((b) (c)\n    (d) (e)) (f))" "(| (f))" "(|)" "(|)")
-      (xfail "(a| ((b) (c)\n    (d) (e)) (f))" "(a| (f))" "(a|)" "(a|)")
+      ("(a| ((b) (c)\n    (d) (e)) (f))" "(a| (f))" "(a|)" "(a|)")
       (xfail "(a |((b) (c)\n    (d) (e)) (f))" "(a | (f))" "(a |)" "(a |)")
       (xfail
        "(a (|(b) (c)\n    (d) (e)) (f))"
@@ -968,8 +968,7 @@ Four arguments: the paredit command, the text of the buffer
        "(| (f))"
        "(|)"
        "(|)")
-      (xfail
-       "(a| \"(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
+      ("(a| \"(b) (c)\n )  { ;;;; \n\n\n(d)( (e);\" (f))"
        "(a| (f))"
        "(a|)"
        "(a|)")
@@ -1006,7 +1005,7 @@ Four arguments: the paredit command, the text of the buffer
        "(a \"(b) (c)\n )  { ;;;; \n\n\n|\" (f))")
 
       ("|x(\n)(z)" "|(z)" "|" error)
-      ("x|(\n)(z)" "x|(z)" "x|" error)
+      ("x|(\n)(z)" "x| (z)" "x|" error)
       ("x(|\n)(z)" "x(|)(z)" "x(|)(z)")
       (xfail "x(\n|)(z)" "x(\n|)(z)")
       ("x(\n)|(z)" "x(\n)|" error)
@@ -1015,7 +1014,7 @@ Four arguments: the paredit command, the text of the buffer
       ("x(\n)(z)|" error)
 
       ("|x\"\n\"(z)" "|(z)" "|" error)
-      ("x|\"\n\"(z)" "x|(z)" "x|" error)
+      ("x|\"\n\"(z)" "x| (z)" "x|" error)
       ("x\"|\n\"(z)" "x\"|\"(z)" "x\"|\"(z)")
       ("x\"\n|\"(z)" "x\"\n|\"(z)")
       ("x\"\n\"|(z)" "x\"\n\"|" error)
