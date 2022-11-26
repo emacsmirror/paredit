@@ -438,9 +438,10 @@ Four arguments: the paredit command, the text of the buffer
     ("| " "|" error)
     (" |" error)
     ("| \n "
-     ;; This ought to be an intermediate step, but evidently it is only
-     ;; in recent versions of GNU Emacs with `show-trailing-whitespace'
-     ;; set to thanks to some brain damage in `kill-line'.
+     ;; If trailing whitespace is invisible, i.e., if
+     ;; `show-trailing-whitespace' is nil, `kill-line' deliberately
+     ;; skips this intermediate step, treaing trailing whitespace as if
+     ;; it were just an end of line.
      ;;
      ;; "|\n "
      "| " "|" error)
@@ -772,9 +773,10 @@ Four arguments: the paredit command, the text of the buffer
       ("| " "|" error)
       (" |" error)
       ("| \n "
-       ;; This ought to be an intermediate step, but evidently it is only
-       ;; in recent versions of GNU Emacs with `show-trailing-whitespace'
-       ;; set to thanks to some brain damage in `kill-line'.
+       ;; If trailing whitespace is invisible, i.e., if
+       ;; `show-trailing-whitespace' is nil, `kill-line' deliberately
+       ;; skips this intermediate step, treaing trailing whitespace as
+       ;; if it were just an end of line.
        ;;
        ;; "|\n "
        "| " "|" error)
