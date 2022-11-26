@@ -1585,61 +1585,70 @@ With a numeric prefix argument N, do `kill-line' that many times."
 ;;; extraordinarily difficult or impossible, so we have to implement
 ;;; killing in both directions by parsing forward.
 
-(defun paredit-forward-kill-word ()
+(defun paredit-forward-kill-word (&optional argument)
   "Kill a word forward, skipping over intervening delimiters."
-  (interactive)
-  (let ((beginning (point)))
-    (skip-syntax-forward " -")
-    (let* ((parse-state (paredit-current-parse-state))
-           (state (paredit-kill-word-state parse-state 'char-after)))
-      (while (not (or (eobp)
-                      (eq ?w (char-syntax (char-after)))))
-        (setq parse-state
-              (progn (forward-char 1) (paredit-current-parse-state))
-;;               (parse-partial-sexp (point) (1+ (point))
-;;                                   nil nil parse-state)
-              )
-        (let* ((old-state state)
-               (new-state
-                (paredit-kill-word-state parse-state 'char-after)))
-          (cond ((not (eq old-state new-state))
-                 (setq parse-state
-                       (paredit-kill-word-hack old-state
-                                               new-state
-                                               parse-state))
-                 (setq state
-                       (paredit-kill-word-state parse-state
-                                                'char-after))
-                 (setq beginning (point)))))))
-    (goto-char beginning)
-    (kill-word 1)))
+  (interactive "p")
+  (let ((argument (or argument 1)))
+    (if (< argument 0)
+        (paredit-backward-kill-word (- argument))
+      (dotimes (i argument)
+        (let ((beginning (point)))
+          (skip-syntax-forward " -")
+          (let* ((parse-state (paredit-current-parse-state))
+                 (state (paredit-kill-word-state parse-state 'char-after)))
+            (while (not (or (eobp)
+                            (eq ?w (char-syntax (char-after)))))
+              (setq parse-state
+                    (progn (forward-char 1) (paredit-current-parse-state))
+                    ;; XXX Why did I comment this out?
+                    ;; (parse-partial-sexp (point) (1+ (point))
+                    ;;                     nil nil parse-state)
+                    )
+              (let* ((old-state state)
+                     (new-state
+                      (paredit-kill-word-state parse-state 'char-after)))
+                (cond ((not (eq old-state new-state))
+                       (setq parse-state
+                             (paredit-kill-word-hack old-state
+                                                     new-state
+                                                     parse-state))
+                       (setq state
+                             (paredit-kill-word-state parse-state
+                                                      'char-after))
+                       (setq beginning (point)))))))
+          (goto-char beginning)
+          (kill-word 1))))))
 
-(defun paredit-backward-kill-word ()
+(defun paredit-backward-kill-word (&optional argument)
   "Kill a word backward, skipping over any intervening delimiters."
-  (interactive)
-  (if (not (or (bobp)
-               (eq (char-syntax (char-before)) ?w)))
-      (let ((end (point)))
-        (backward-word 1)
-        (forward-word 1)
-        (goto-char (min end (point)))
-        (let* ((parse-state (paredit-current-parse-state))
-               (state
-                (paredit-kill-word-state parse-state 'char-before)))
-          (while (and (< (point) end)
-                      (progn
-                        (setq parse-state
-                              (parse-partial-sexp (point) (1+ (point))
-                                                  nil nil parse-state))
-                        (or (eq state
-                                (paredit-kill-word-state parse-state
-                                                         'char-before))
-                            (progn (backward-char 1) nil)))))
-          (if (and (eq state 'comment)
-                   (eq ?\# (char-after (point)))
-                   (eq ?\| (char-before (point))))
-              (backward-char 1)))))
-  (backward-kill-word 1))
+  (interactive "p")
+  (let ((argument (or argument 1)))
+    (if (< argument 0)
+        (paredit-forward-kill-word (- argument))
+      (dotimes (i argument)
+        (if (not (or (bobp)
+                     (eq (char-syntax (char-before)) ?w)))
+            (let ((end (point)))
+              (backward-word 1)
+              (forward-word 1)
+              (goto-char (min end (point)))
+              (let* ((parse-state (paredit-current-parse-state))
+                     (state
+                      (paredit-kill-word-state parse-state 'char-before)))
+                (while (and (< (point) end)
+                            (progn
+                              (setq parse-state
+                                    (parse-partial-sexp (point) (1+ (point))
+                                                        nil nil parse-state))
+                              (or (eq state
+                                      (paredit-kill-word-state parse-state
+                                                               'char-before))
+                                  (progn (backward-char 1) nil)))))
+                (if (and (eq state 'comment)
+                         (eq ?\# (char-after (point)))
+                         (eq ?\| (char-before (point))))
+                    (backward-char 1)))))
+        (backward-kill-word 1)))))
 
 ;;;;;; Word-Killing Auxiliaries
 

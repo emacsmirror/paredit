@@ -1613,31 +1613,49 @@ Four arguments: the paredit command, the text of the buffer
        "\n(f xy\n   z\n   w)\n;;;|T "
        "\n(f xy\n   z\n   w)\n;;;|T "))))
 
-(paredit-test 'paredit-forward-kill-word
-  '(("|(hello \"world\")"
-     "(| \"world\")"
-     "( \"|\")"
-     error)
-    ("(hello| \"world\")"
-     "(hello \"|\")")
-    ("(hello \"world|\")" error)
-    ("(hello \"world\"|)" error)
-    ("(hello \"world\")|" error)))
+(let ((forward-cases
+       '(("|(hello \"world\")"
+             "(| \"world\")"
+             "( \"|\")"
+             error)
+            ("(hello| \"world\")"
+             "(hello \"|\")")
+            ("(hello \"world|\")" error)
+            ("(hello \"world\"|)" error)
+            ("(hello \"world\")|" error))))
+  (paredit-test 'paredit-forward-kill-word forward-cases)
+  (let ((current-prefix-arg -1))
+    (paredit-test 'paredit-backward-kill-word forward-cases)))
 
-(paredit-test 'paredit-backward-kill-word
-  '(("(hello \"world\")|"
-     "(hello \"|\")"
-     "(|\"\")"
-     ;; error or nop -- XXX broken
-     )
-    ("(hello \"|world\")"
-     "(|\"world\")"
-     ;; error or nop -- XXX broken
-     )
-    ("(|hello \"world\")"
-     ;; error or nop -- XXX broken
-     )
-    ("|(hello \"world\")" "|(hello \"world\")")))
+(let ((backward-cases
+       '(("(hello \"world\")|"
+          "(hello \"|\")"
+          "(|\"\")"
+          ;; error or nop -- XXX broken
+          )
+         ("(hello \"|world\")"
+          "(|\"world\")"
+          ;; error or nop -- XXX broken
+          )
+         ("(|hello \"world\")"
+          ;; error or nop -- XXX broken
+          )
+         ("|(hello \"world\")" "|(hello \"world\")"))))
+  (paredit-test 'paredit-backward-kill-word backward-cases)
+  (let ((current-prefix-arg -1))
+    (paredit-test 'paredit-forward-kill-word backward-cases)))
+
+(let ((current-prefix-arg 2))
+  (paredit-test 'paredit-forward-kill-word
+    '((("(foo |bar baz quux)"
+        "(foo | quux)"
+        "(foo |)"
+        "(foo |)"))))
+  (paredit-test 'paredit-backward-kill-word
+    '((("(foo bar baz| quux)"
+        "(foo | quux)"
+        "(| quux)"
+        "(| quux)")))))
 
 (if (> paredit-test-nfailures 0)
     (error "%S paredit tests failed" paredit-test-nfailures))
