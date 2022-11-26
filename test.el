@@ -349,7 +349,7 @@ Four arguments: the paredit command, the text of the buffer
 
 (paredit-test 'paredit-delete-region '(("|foo" error)))
 (paredit-test 'paredit-kill-region '(("|foo" error)))
-
+
 (let ((deletion-tests
        '(("|foo_" "|")
          ("|(foo)_" "|")
@@ -358,23 +358,60 @@ Four arguments: the paredit command, the text of the buffer
          ("(foo |(bar \"baz\" ; quux\n          zot)\n     _mumble)"
           "(foo |mumble)")
          ("(foo (bar |baz) (quux _zot) mumble)" "(foo (bar |zot) mumble)")
-         ("(foo bar    ;baz| quux\n     zot_)" error)
          ("(foo bar    ;baz| quux\n     _zot\n     mumble)"
           "(foo bar    ;baz|zot\n     mumble)")
-         ("(foo bar| baz    ;quux (_)\n     zot)" error)
          ("(foo bar| baz    ;quux ()_\n     zot)"
-          "(foo bar|\n     zot)"))))
+          "(foo bar|\n     zot)")))
+      (deletion-error-tests
+       '(("(foo bar    ;baz| quux\n     zot_)" error)
+         ("(foo bar| baz    ;quux (_)\n     zot)" error)))
+      (delete-char-tests
+       '(("|foo_" "|oo")
+         ("|(foo)_" "(|foo)")
+         (";;; f|oo (bar ;_baz\n(zot)\n" ";;; f|o (bar ;baz\n(zot)\n")
+         ("(foo |bar_ baz)\n" "(foo |ar baz)\n")
+         ("(foo |(bar \"baz\" ; quux\n          zot)\n     _mumble)"
+          "(foo (|bar \"baz\" ; quux\n          zot)\n     mumble)")
+         ("(foo (bar |baz) (quux _zot) mumble)"
+          "(foo (bar |az) (quux zot) mumble)")
+         ("(foo bar    ;baz| quux\n     _zot\n     mumble)"
+          "(foo bar    ;baz|quux\n     zot\n     mumble)")
+         ("(foo bar| baz    ;quux ()_\n     zot)"
+          "(foo bar|baz    ;quux ()\n     zot)")
+         ("(foo bar    ;baz| quux\n     zot_)"
+          "(foo bar    ;baz|quux\n     zot)")
+         ("(foo bar| baz    ;quux (_)\n     zot)"
+          "(foo bar|baz    ;quux ()\n     zot)"))))
   (paredit-test 'paredit-delete-region deletion-tests)
-  ;++ Need to check whether `paredit-kill-region' updates the kill ring
-  ;++ correctly.
-  (paredit-test 'paredit-kill-region deletion-tests)
+  (paredit-test 'paredit-delete-region deletion-error-tests)
+  (paredit-test (defun paredit-test-kill-region ()
+                  (interactive)
+                  (let ((mark (mark)))
+                    (save-excursion
+                      (let ((kill-ring nil))
+                        (let ((text (buffer-string)))
+                          (call-interactively 'paredit-kill-region)
+                          (call-interactively 'yank)
+                          (if (not (string= text (buffer-string)))
+                              (error "Before kill %S, after yank %S"
+                                     text
+                                     (buffer-string))))))
+                    (set-mark mark))
+                  (let ((kill-ring nil))
+                    (call-interactively 'paredit-kill-region)))
+    deletion-tests)
+  (paredit-test 'paredit-kill-region deletion-error-tests)
   (if (boundp 'delete-active-region)
       (let ((delete-active-region t)
             (transient-mark-mode t)
             (mark-active t))
-        ;; XXX check that paredit-delete-char is not affected
+        (paredit-test 'paredit-delete-char delete-char-tests)
         (paredit-test 'paredit-forward-delete deletion-tests)
-        (paredit-test 'paredit-backward-delete deletion-tests))))
+        (paredit-test 'paredit-forward-delete deletion-error-tests)
+        (paredit-test 'paredit-backward-delete deletion-tests)
+        (paredit-test 'paredit-backward-delete deletion-error-tests)
+        (let ((delete-active-region nil))
+          (paredit-test 'paredit-forward-delete delete-char-tests)))))
 
 ;;; The hairiest paredit command: paredit-kill.
 
