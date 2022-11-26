@@ -1251,6 +1251,26 @@ Four arguments: the paredit command, the text of the buffer
     ("\"|foo\\\"bar\"" error)
     ;++ ("(\"|foo\\\;bar\")" error)
     ))
+
+(let ((prompt "prompt> ")
+      (before "(foo (bar| baz))")
+      (expected "(foo bar| baz)"))
+  (with-temp-buffer
+    (paredit-test-buffer-setup)
+    (insert prompt)
+    (add-text-properties (point-min) (point-max) '(field output))
+    (insert before)
+    (goto-char (length prompt))
+    (search-forward "|")
+    (delete-char -1)
+    (call-interactively 'paredit-splice-sexp)
+    (insert "|")
+    (let ((actual (buffer-string)))
+      (if (not (string= (concat prompt expected) actual))
+          (paredit-test-failed 'paredit-splice-sexp
+                               (concat prompt before)
+                               actual
+                               (concat prompt expected))))))
 
 (paredit-test 'paredit-forward-slurp-sexp
   '(("|" error)

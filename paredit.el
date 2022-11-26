@@ -184,7 +184,7 @@ If point was on code, it moves with the code.
 If point was on indentation, it stays in indentation."
     (let ((column (make-symbol "column"))
           (indentation (make-symbol "indentation")))
-      `(let ((,column (current-column))
+      `(let ((,column (paredit-current-column))
              (,indentation (paredit-current-indentation)))
          (let ((value (progn ,@body)))
            (paredit-restore-column ,column ,indentation)
@@ -2953,10 +2953,16 @@ This is independent of context -- it doesn't check what state the
           t)
       nil)))
 
+(defun paredit-current-column ()
+  ;; Like current-column, but respects field boundaries in interactive
+  ;; modes like ielm.  For use only with paredit-restore-column, which
+  ;; works relative to point-at-bol.
+  (- (point) (point-at-bol)))
+
 (defun paredit-current-indentation ()
   (save-excursion
     (back-to-indentation)
-    (current-column)))
+    (paredit-current-column)))
 
 (defun paredit-restore-column (column indentation)
   ;; Preserve the point's position either in the indentation or in the
