@@ -720,6 +720,9 @@ Four arguments: the paredit command, the text of the buffer
     ("(f|o)" "f|o()" error)
     ("(fo|)" "fo(|)" "fo(|)")
     ("(fo)|" error)
+    (xfail "(|fo)" "|fo ()" error)
+    (xfail "(f|o)" "f|o ()" error)
+    (xfail "(fo|)" "fo (|)" error)
 
     ("|(fo (ba bz qx) zt)" error)
     ("(|fo (ba bz qx) zt)" "|fo ((ba bz qx) zt)" error)
@@ -1261,8 +1264,7 @@ Four arguments: the paredit command, the text of the buffer
 
     ;; Uh oh -- you can really lose here.
     ("\"|foo\\\"bar\"" error)
-    ;++ ("(\"|foo\\\;bar\")" error)
-    ))
+    (xfail "(\"|foo\\\;bar\")" error)))
 
 (let ((prompt "prompt> ")
       (before "(foo (bar| baz))")
@@ -1287,7 +1289,7 @@ Four arguments: the paredit command, the text of the buffer
 (paredit-test 'paredit-forward-slurp-sexp
   '(("|" error)
     ("|()" error)
-    ;; ("(|)" error)                    ;++ Urk...
+    ("(|)" error)
     ("()|" error)
     ("|() foo" error)
     ("(|) foo" "(|foo)")
@@ -1307,7 +1309,7 @@ Four arguments: the paredit command, the text of the buffer
     ("(foo) ba|r" error)
     ("(foo) bar|" error)
     ("|\"\"" error)
-    ;; ("\"|\"" error)                  ;++ Urk...
+    (xfail "\"|\"" error)
     ("\"\"|" error)
     ("|\"\" foo" error)
     ("\"|\" foo" "\"|foo\"")
@@ -1330,7 +1332,7 @@ Four arguments: the paredit command, the text of the buffer
     ("\"|\" \"\"" "\"|\\\"\\\"\"")
     ("\"\"| \"\"" error)
     ("\"\" |\"\"" error)
-    ;; ("\"\" \"|\"" error)             ;++ Urk...
+    (xfail "\"\" \"|\"" error)
     ("\"\" \"\"|" error)
 
     ("|(#\\x) y" error)
@@ -1372,7 +1374,7 @@ Four arguments: the paredit command, the text of the buffer
 (paredit-test 'paredit-backward-slurp-sexp
   '(("|" error)
     ("|()" error)
-    ;; ("(|)" error)                    ;++ Urk...
+    (xfail "(|)" error)
     ("()|" error)
     ("|foo ()" error)
     ("f|oo ()" error)
@@ -1392,7 +1394,7 @@ Four arguments: the paredit command, the text of the buffer
     ("foo (bar|)" "(foo bar|)")
     ("foo (bar)|" error)
     ("|\"\"" error)
-    ;; ("\"|\"" error)                  ;++ Urk...
+    (xfail "\"|\"" error)
     ("\"\"|" error)
     ("|foo \"\"" error)
     ("f|oo \"\"" error)
@@ -1412,7 +1414,7 @@ Four arguments: the paredit command, the text of the buffer
     ("foo \"bar|\"" "\"foo bar|\"")
     ("foo \"bar\"|" error)
     ("|\"\" \"\"" error)
-    ;; ("\"|\" \"\"" error)             ;++ Urk...
+    (xfail "\"|\" \"\"" error)
     ("\"\"| \"\"" error)
     ("\"\" |\"\"" error)
     ("\"\" \"|\"" "\"\\\"\\\"|\"")
