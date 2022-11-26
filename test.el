@@ -57,22 +57,24 @@ Four arguments: the paredit command, the text of the buffer
             (if (cond ((eq expected 'error)
                        ;++ Check that there are no more expected states.
                        (condition-case condition
-                           (progn (call-interactively command) t)
-                         (error nil)))
+                           (progn (call-interactively command) nil)
+                         (error t)))
                       ((stringp expected)
-                       (call-interactively command)
-                       (insert ?\|)
-                       (not (string= expected (buffer-string))))
-                      (t (error "Bad test expectation: %S" expected)))
-                (progn
-                  (if (not xfail)
-                      (let ((actual (buffer-string)))
-                        (paredit-test-failed command before actual expected)))
-                  (throw 'break nil))
-              (if xfail
+                       (condition-case condition
+                           (progn (call-interactively command)
+                                  (insert ?\|)
+                                  (string= expected (buffer-string)))
+                         (error nil)))
+                      (t
+                       (error "Bad test expectation: %S" expected)))
+                (if xfail               ;success
+                    (let ((actual (buffer-string)))
+                      (paredit-test-failed command before actual 'failure)
+                      (throw 'break nil)))
+              (if (not xfail)           ;mismatch or error
                   (let ((actual (buffer-string)))
-                    (paredit-test-failed command before actual 'failure)
-                    (throw 'break nil)))))
+                    (paredit-test-failed command before actual expected)))
+              (throw 'break nil)))
           (setq before expected))))))
 
 (defun paredit-test-buffer-setup ()
