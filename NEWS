@@ -25,6 +25,17 @@ Current development version: https://paredit.org/paredit-beta.el
 *** Worked around brokenness induced by Electric Indent Mode.
 **** (Thanks to Sean Whitton for reporting the bug and discussing the fix.)
 
+NOTE: The Electric Indent Mode workaround turns out to break ielm and
+other interactive modes, because paredit now defines RET, overriding
+the binding in interactive modes that submits an input.
+
+Workaround to restore the old behaviour:
+
+  (define-key paredit-mode-map (kbd "RET") nil)
+  (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)
+
+Recommended to disable Electric Indent Mode at the same time.
+
 ** Version 24 -- 2014-12-06
 
 *** Slurp/barf now support prefix arguments with the obvious semantics.
