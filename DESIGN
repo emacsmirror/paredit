@@ -1,0 +1,66 @@
+Some design principles for paredit:
+
+- Paredit should stay out of your way -- it shouldn't interrupt your
+  train of thought while writing or editing code.
+
+  Paredit shouldn't interrupt your train of thought while writing or
+  editing code.  When you're typing code at a keyboard, the result of
+  each keystroke should be so predictable you can fluently keep typing
+  while thinking about the code, not the keystrokes.
+
+  => When writing new code from the start, you should be able to type
+     what you would have typed without paredit and get the same result.
+
+     Paredit just lets you skip some of the keystrokes if you want, and
+     helps you to maintain balance while editing later.
+
+     Similarly, if you go back to delete what you wrote, character by
+     character, paredit should eventually delete the same characters
+     that would have been deleted without paredit -- but the
+     intermediate steps will just stay balanced along the way.
+
+     Other auto-paren systems often leave extra garbage littering
+     around as you're editing.  This is annoying!  Of course, the
+     tradeoff of paredit's approach is that sometimes you feel `stuck'.
+     But paredit tries to make it easy to get unstuck with commands
+     like C-k (paredit-kill) and the more advanced structure editing
+     commands like M-s (paredit-splice-sexp).
+
+  => Robustness in the face of edge cases matters.
+
+     Much of paredit is dedicated to handling edge cases so that it can
+     take over basic keystrokes like ( ) DEL C-d without tripping you
+     up.
+
+     Many of paredit's automatic tests start with an example buffer
+     content and a command, and record the effect of the command for
+     every possible starting point in that buffer content, iterated
+     until the buffer stops changing or there is an error.  This is a
+     good way not just to record edge cases and avoid regressions, but
+     also to find edge cases in the first place.
+
+  => Automatic reindentation changes should be limited to the
+     S-expression that is being edited.
+
+     It's helpful for paredit to keep the parts of the code you're
+     editing indented while you're editing it, but harmful to reindent
+     the code you weren't editing -- that's a nasty surprise for the
+     user.
+
+- Customization hurts robustness and predictability.
+
+  It should limited largely to the user's choice of key bindings and to
+  standard information encoded in the major mode like the syntax table.
+  More configuration knobs are more ways things can go wrong
+  unpredictably.
+
+- No Chesterton's fences.
+
+  Paredit handles a lot of edge cases to provide a good, predictable
+  user experience.  If there's obscure logic to handle edge cases, the
+  edge cases must be recorded in the automatic tests -- that way, if
+  it's necessary, removing the obscure logic will cause obvious
+  failures.
+
+  (There's still too much obscure logic in paredit from before the
+  automatic tests were introduced, especially in paredit-kill.)
