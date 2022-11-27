@@ -1024,7 +1024,7 @@ However, to mitigate the negative user experience of combining
 Normally, inserts a newline, like traditional Emacs RET.
 With Electric Indent Mode enabled, inserts a newline and indents
   the new line, as well as any subexpressions of it on subsequent
-  lines."
+  lines; see `paredit-newline' for details and examples."
   (interactive)
   (if (paredit-electric-indent-mode-p)
       (let ((electric-indent-mode nil))
@@ -1035,7 +1035,7 @@ With Electric Indent Mode enabled, inserts a newline and indents
   "Default key binding for C-j in Paredit Mode.
 Normally, inserts a newline and indents
   the new line, as well as any subexpressions of it on subsequent
-  lines.
+  lines; see `paredit-newline' for details and examples.
 With Electric Indent Mode enabled, inserts a newline, like
   traditional Emacs RET."
   (interactive)
