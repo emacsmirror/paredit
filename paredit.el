@@ -913,7 +913,7 @@ If in a character literal, do nothing.  This prevents accidentally
 
 (defun paredit-meta-doublequote (&optional n)
   "Move to the end of the string.
-If not in a string, act as `paredit-doublequote'; if not prefix argument
+If not in a string, act as `paredit-doublequote'; if no prefix argument
  is specified and the region is not active or `transient-mark-mode' is
  disabled, the default is to wrap one S-expression, however, not zero."
   (interactive "P")
@@ -923,7 +923,7 @@ If not in a string, act as `paredit-doublequote'; if not prefix argument
 
 (defun paredit-meta-doublequote-and-newline (&optional n)
   "Move to the end of the string, insert a newline, and indent.
-If not in a string, act as `paredit-doublequote'; if not prefix argument
+If not in a string, act as `paredit-doublequote'; if no prefix argument
  is specified and the region is not active or `transient-mark-mode' is
  disabled, the default is to wrap one S-expression, however, not zero."
   (interactive "P")
@@ -1954,7 +1954,7 @@ If there are no more S-expressions in this one before the closing
 (defun-motion paredit-backward (&optional arg)
   "Move backward an S-expression, or up an S-expression backward.
 If there are no more S-expressions in this one before the opening
-  delimiter, move past that opening delimiter backward; otherwise, move
+  delimiter, move past that opening delimiter backward; otherwise,
   move backward past the S-expression preceding the point."
   (let ((n (or arg 1)))
     (cond ((< 0 n) (dotimes (i n)       (paredit-move-backward)))
