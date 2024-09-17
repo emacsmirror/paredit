@@ -416,6 +416,9 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
    ("M-("       paredit-wrap-round
                 ("(foo |bar baz)"
                  "(foo (|bar) baz)"))
+   ("M-["       paredit-wrap-square
+                ("(foo |bar baz)"
+                 "(foo [|bar] baz)"))
    ("M-s"       paredit-splice-sexp
                 ("(foo (bar| baz) quux)"
                  "(foo bar| baz quux)"))
@@ -2686,8 +2689,8 @@ Automatically reindent the barfed S-expression and the form from which
              (paredit-in-char-p))
          (error "Invalid context for splitting S-expression."))
         (t
-         (let ((open (save-excursion (backward-up-list) (char-after)))
-               (close (save-excursion (up-list) (char-before))))
+         (let ((open (save-excursion (paredit-backward-up) (char-after)))
+               (close (save-excursion (paredit-forward-up) (char-before))))
            (delete-horizontal-space)
            (insert close)
            (save-excursion
