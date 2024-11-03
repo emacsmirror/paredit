@@ -56,11 +56,11 @@ Four arguments: the paredit command, the text of the buffer
             (delete-char -1)
             (if (cond ((eq expected 'error)
                        ;++ Check that there are no more expected states.
-                       (condition-case condition
+                       (condition-case _condition
                            (progn (call-interactively command) nil)
                          (error t)))
                       ((stringp expected)
-                       (condition-case condition
+                       (condition-case _condition
                            (progn (call-interactively command)
                                   (insert ?\|)
                                   (string= expected (buffer-string)))
@@ -84,7 +84,7 @@ Four arguments: the paredit command, the text of the buffer
   (set (make-local-variable 'show-trailing-whitespace) nil)
   (set (make-local-variable 'minibuffer-message-timeout) 0))
 
-(paredit-do-commands (spec keys command examples)
+(paredit-do-commands (spec _keys command examples)
     nil                                 ;string case
   ;; `paredit-backslash' has a funny example.
   (if (not (eq command 'paredit-backslash))
@@ -1882,7 +1882,7 @@ Four arguments: the paredit command, the text of the buffer
       ("(foo bar| baz)" "foo bar| (baz)")
       ("(foo bar |baz)" "foo bar (|baz)"))))
 
-(defun paredit-canary-indent-method (state indent-point normal-indent)
+(defun paredit-canary-indent-method (_state _indent-point _normal-indent)
   (check-parens)
   nil)
 
