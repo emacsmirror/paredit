@@ -11,6 +11,7 @@ Current development version: https://paredit.org/paredit-beta.el
 
 *** Improved some edge cases in paredit-kill with kill-whole-line enabled.
 **** Many other edge cases are slightly broken; patches welcome!
+*** Enabled lexical-binding.
 
 ** Version 26 -- 2022-11-26
 
