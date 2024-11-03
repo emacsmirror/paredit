@@ -24,8 +24,8 @@
 
 (defun paredit-test-failure-default (command before after expected)
   (setq paredit-test-nfailures (+ 1 paredit-test-nfailures))
-  (warn "%S failed test: after %S, got %S but expected %S."
-        command before after expected))
+  (paredit-warn "%S failed test: after %S, got %S but expected %S."
+                command before after expected))
 
 (defvar paredit-test-failure-function 'paredit-test-failure-default
   "Function to call when `paredit-test' fails.
