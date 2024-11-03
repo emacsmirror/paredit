@@ -210,7 +210,7 @@ If point was on indentation, it stays in indentation."
   "Keymap for the paredit minor mode.")
 
 (defvar paredit-override-check-parens-function
-  (lambda (condition) (declare ignore condition) nil)
+  (lambda (_condition) nil)
   "Function to tell whether unbalanced text should inhibit Paredit Mode.")
 
 ;;;###autoload
@@ -498,7 +498,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
   (put 'paredit-do-commands 'lisp-indent-function 2))
 
 (defun paredit-define-keys ()
-  (paredit-do-commands (spec keys fn examples)
+  (paredit-do-commands (spec keys fn _examples)
       nil       ; string case
     (dolist (key keys)
       (define-key paredit-mode-map (read-kbd-macro key) fn))))
@@ -513,7 +513,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
 (defun paredit-annotate-mode-with-examples ()
   (let ((contents
          (list (paredit-function-documentation 'paredit-mode))))
-    (paredit-do-commands (spec keys fn examples)
+    (paredit-do-commands (spec _keys fn examples)
         (push (concat "\n\n" spec "\n")
               contents)
       (let ((name (symbol-name fn)))
@@ -538,7 +538,7 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
   nil)
 
 (defun paredit-annotate-functions-with-examples ()
-  (paredit-do-commands (spec keys fn examples)
+  (paredit-do-commands (spec _keys fn examples)
       nil       ; string case
     (put fn 'function-documentation
          (concat (paredit-function-documentation fn)
@@ -1591,7 +1591,7 @@ In that case, ensure there is at least one space between the
 ;;; beginning is (point), and eol is (point-at-eol).  Handling of
 ;;; `kill-whole-line' is trick, and probably kind of broken.
 
-(defun paredit-forward-sexps-to-kill (beginning eol)
+(defun paredit-forward-sexps-to-kill (_beginning eol)
   (let ((end-of-list-p nil) ;Have we hit a closing delimiter on this line?
         (firstp t))         ;Is this still the first line?
     (catch 'return
@@ -1687,7 +1687,7 @@ In that case, ensure there is at least one space between the
   (let ((argument (or argument 1)))
     (if (< argument 0)
         (paredit-backward-kill-word (- argument))
-      (dotimes (i argument)
+      (dotimes (_i argument)
         (let ((beginning (point)))
           (skip-syntax-forward " -")
           (let* ((parse-state (paredit-current-parse-state))
@@ -1721,7 +1721,7 @@ In that case, ensure there is at least one space between the
   (let ((argument (or argument 1)))
     (if (< argument 0)
         (paredit-forward-kill-word (- argument))
-      (dotimes (i argument)
+      (dotimes (_i argument)
         (if (not (or (bobp)
                      (eq (char-syntax (char-before)) ?w)))
             (let ((end (point)))
@@ -1862,7 +1862,8 @@ With a prefix argument, skip the balance check."
       (paredit-check-region-for-delete:char-quote start start-state
                                                   end end-state))))
 
-(defun paredit-check-region-for-delete:depth (start start-state end end-state)
+(defun paredit-check-region-for-delete:depth
+    (_start start-state _end end-state)
   (let ((start-depth (nth 0 start-state))
         (end-depth (nth 0 end-state)))
     (if (not (= start-depth end-depth))
@@ -1870,7 +1871,8 @@ With a prefix argument, skip the balance check."
                start-depth
                end-depth))))
 
-(defun paredit-check-region-for-delete:string (start start-state end end-state)
+(defun paredit-check-region-for-delete:string
+    (_start start-state _end end-state)
   (let ((start-string-p (nth 3 start-state))
         (end-string-p (nth 3 end-state)))
     (if (not (eq start-string-p end-string-p))
@@ -1879,7 +1881,7 @@ With a prefix argument, skip the balance check."
                (if end-string-p "" "not ")))))
 
 (defun paredit-check-region-for-delete:comment
-    (start start-state end end-state)
+    (_start start-state end end-state)
   (let ((start-comment-state (nth 4 start-state))
         (end-comment-state (nth 4 end-state)))
     (if (not (or (eq start-comment-state end-comment-state)
@@ -1915,7 +1917,7 @@ With a prefix argument, skip the balance check."
                               end-comment-state)))))))
 
 (defun paredit-check-region-for-delete:char-quote
-    (start start-state end end-state)
+    (_start start-state _end end-state)
   (let ((start-char-quote (nth 5 start-state))
         (end-char-quote (nth 5 end-state)))
     (if (not (eq start-char-quote end-char-quote))
@@ -1948,8 +1950,8 @@ If there are no more S-expressions in this one before the closing
   delimiter, move past that closing delimiter; otherwise, move forward
   past the S-expression following the point."
   (let ((n (or arg 1)))
-    (cond ((< 0 n) (dotimes (i n)       (paredit-move-forward)))
-          ((< n 0) (dotimes (i (- n))   (paredit-move-backward))))))
+    (cond ((< 0 n) (dotimes (_i n)      (paredit-move-forward)))
+          ((< n 0) (dotimes (_i (- n))  (paredit-move-backward))))))
 
 (defun-motion paredit-backward (&optional arg)
   "Move backward an S-expression, or up an S-expression backward.
@@ -1957,8 +1959,8 @@ If there are no more S-expressions in this one before the opening
   delimiter, move past that opening delimiter backward; otherwise,
   move backward past the S-expression preceding the point."
   (let ((n (or arg 1)))
-    (cond ((< 0 n) (dotimes (i n)       (paredit-move-backward)))
-          ((< n 0) (dotimes (i (- n))   (paredit-move-forward))))))
+    (cond ((< 0 n) (dotimes (_i n)      (paredit-move-backward)))
+          ((< n 0) (dotimes (_i (- n))  (paredit-move-forward))))))
 
 (defun paredit-move-forward ()
   (cond ((paredit-in-string-p)
