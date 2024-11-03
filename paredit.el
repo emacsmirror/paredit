@@ -1,4 +1,4 @@
-;;; paredit.el --- minor mode for editing parentheses  -*- Mode: Emacs-Lisp -*-
+;;; paredit.el --- minor mode for editing parentheses -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2005--2023 Taylor R. Campbell
 
